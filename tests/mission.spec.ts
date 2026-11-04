@@ -29,7 +29,7 @@ test("investigate, recover from invalid order, deploy and replay", async ({
   await page.getByRole("button", { name: "Ask DOC" }).click();
   await expect(page.locator("#hint")).toBeVisible();
   await page.getByRole("button", { name: "Run pipeline" }).click();
-  await expect(page.getByRole("status")).toContainText("Not quite");
+  await expect(page.locator("#feedback")).toContainText("Not quite");
   await solve(page);
   await page.getByRole("button", { name: "Run pipeline" }).click();
   await expect(

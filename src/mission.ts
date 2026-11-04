@@ -67,7 +67,7 @@ export function finish(m: Mission): Mission {
         running: false,
         completed: true,
         feedback:
-          "Deployment succeeded! A passing pipeline is a start—not proof of security. Next mission: investigate a red build.",
+          "Deployment succeeded! A passing pipeline is a start—not proof of security. Next: contain a leaked credential.",
       }
     : m;
 }

@@ -8,6 +8,8 @@ import {
   type Stage,
 } from "./mission";
 import "./style.css";
+import { mountCampaign } from "./campaign-ui";
+import { mountAudio, sound } from "./sound";
 const labels: Record<
   Stage,
   { title: string; description: string; icon: string }
@@ -45,12 +47,16 @@ const labels: Record<
 };
 const app = document.querySelector<HTMLDivElement>("#app")!;
 app.innerHTML = `<header><a class="brand" href="./">❯_ SHIFT LEFT<span>THE DELIVERY CONTROL ROOM</span></a><div class="header-right"><span class="live">● SIMULATION ONLINE</span><span>ACT I / APPRENTICE</span></div></header>
-<main><nav aria-label="Mission progress"><span>CAMPAIGN / <b>MISSION 01</b></span><span>01 <i>━━━━</i> 02 ──── 03 ──── 04</span></nav>
+<main><nav aria-label="Mission progress"><span>CAMPAIGN / <b>MISSION 01</b></span><span>TUTORIAL <i>━━━━</i> THE LEAKED SECRET</span></nav>
 <section class="hero"><div><p class="eyebrow">MISSION 01 <span>•</span> HELLO, PIPELINE!</p><h1>Good code.<br><em>Great delivery.</em></h1><p class="intro">One release. Five stages. A little out of order.<br>Build a path from the first commit to your users.</p><div class="objective"><span>◎</span><div><strong>YOUR OBJECTIVE</strong><p>Arrange the stages, then run a successful deployment.</p></div></div></div><div class="companion"><img src="./characters/patch.svg" alt="PATCH, a cheerful navy robot engineer with mint eyes"/><div class="speech"><b>PATCH <span> / ENGINEER</span></b><p id="patch-line">SHIP wants this release yesterday. Let’s give it a safe route to production.</p></div></div></section>
 <div class="status-grid"><div><small>RELEASE</small><strong>hello-world <span>v1.0.0</span></strong></div><div><small>ENVIRONMENT</small><strong id="health">Awaiting validation</strong></div><div><small>PIPELINE RUNS</small><strong id="attempts">00</strong></div><div><small>MISSION STATUS</small><strong id="mission-status">In progress</strong></div></div>
 <section class="workspace"><div class="section-heading"><div><p class="eyebrow">01 / CONFIGURE</p><h2>Your delivery pipeline</h2></div><span class="tag">SANDBOX • NO REAL DEPLOYMENTS</span></div><p class="instructions">Drag stages into order. Or focus a card and use ← / →. Select a stage to investigate.</p><div id="stages" class="stages"></div><div class="console"><div class="console-title"><span>❯_ RELEASE TELEMETRY</span><span id="telemetry-status">IDLE</span></div><div id="game" aria-hidden="true"></div><p id="feedback" role="status" aria-live="polite"></p></div><div class="actions"><button id="validate">▶ Run pipeline</button><span>Safe to experiment. Every run is simulated.</span><button id="reset" class="secondary">↻ Restart mission</button></div></section>
 <div class="bottom-grid"><section class="evidence"><p class="eyebrow">02 / INVESTIGATE</p><h2 id="inspect-title">Production</h2><p id="inspect-description"></p><span class="tag">STAGE INTELLIGENCE</span></section><section class="doc"><img src="./characters/doc.svg" alt="DOC, your optional book-shaped learning companion"/><div><p class="eyebrow">DOC / ON YOUR TERMS</p><h2>A little guidance?</h2><p>Every stage has a job. I can help you connect the dots.</p><button id="help" class="secondary" aria-expanded="false">Ask DOC ↗</button><p id="hint" hidden>Start with SOURCE. BUILD creates an artifact; TEST checks it; STAGE is rehearsal; PROD is the live show.</p></div></section></div>
-<section id="summary" hidden tabindex="-1"><p class="eyebrow">✓ MISSION COMPLETE</p><h2>Hello, production.</h2><p>You restored the delivery path: SOURCE → BUILD → TEST → STAGE → PROD.</p><p>Source changes become an artifact, pass automated tests, and rehearse in staging before reaching users. A green pipeline reduces risk; it does not guarantee security.</p><p><strong>Up next:</strong> The Red Build — investigate a failing check. More missions coming soon.</p><button id="replay">Play again ↻</button></section><footer><span>SHIFT LEFT / LEARN BY SHIPPING</span><span>Fictional systems. Real engineering habits.</span></footer></main>`;
+<section id="summary" hidden tabindex="-1"><p class="eyebrow">✓ MISSION COMPLETE</p><h2>Hello, production.</h2><p>You restored the delivery path: SOURCE → BUILD → TEST → STAGE → PROD.</p><p>Source changes become an artifact, pass automated tests, and rehearse in staging before reaching users. A green pipeline reduces risk; it does not guarantee security.</p><p><strong>Up next:</strong> The Leaked Secret — contain the exposure, follow the evidence, and repair delivery.</p><button id="replay">Play again ↻</button></section><footer><span>SHIFT LEFT / LEARN BY SHIPPING</span><span>Fictional systems. Real engineering habits.</span></footer></main>`;
+const tutorial = document.createElement("section");
+tutorial.className = "tutorial-banner";
+tutorial.innerHTML = `<p class="eyebrow">30-SECOND OPTIONAL TUTORIAL</p><h2>Get your bearings. Then contain a leak.</h2><p>Software travels left to right. Fixes get cheaper toward the source. Try one move below, or let PATCH assemble this practice pipeline and go straight to the incident.</p><div class="actions"><button id="tutorial-assemble">PATCH, assemble the practice pipeline</button><button id="tutorial-secret" class="secondary">Skip tutorial — respond to leak →</button></div>`;
+app.querySelector("main")!.prepend(tutorial);
 let state: Mission = newMission();
 let selected = 0;
 let timer: ReturnType<typeof setTimeout> | undefined;
@@ -182,6 +188,7 @@ function tick() {
   activeStep++;
   if (activeStep >= 5) {
     state = finish(state);
+    sound("success");
     activeStep = -1;
     render();
     query("#summary").focus();
@@ -195,6 +202,7 @@ function tick() {
   timer = setTimeout(tick, 650);
 }
 query("#validate").onclick = () => {
+  sound("apply");
   state = validate(state);
   if (state.running) {
     activeStep = -1;
@@ -211,4 +219,23 @@ query("#help").onclick = () => {
   hint.hidden = !hint.hidden;
   query("#help").setAttribute("aria-expanded", String(!hint.hidden));
 };
+query("#tutorial-assemble").onclick = () => {
+  reset();
+  state = {
+    ...state,
+    order: ["SOURCE", "BUILD", "TEST", "STAGE", "PROD"],
+    feedback:
+      "PATCH: source → artifact → behavior checks → rehearsal → users. Run the pipeline, or jump into the incident.",
+  };
+  render();
+  sound("patch");
+  query("#validate").focus();
+};
+query("#tutorial-secret").onclick = () =>
+  document.dispatchEvent(new Event("shift-left-secret"));
 render();
+mountAudio();
+
+mountCampaign(() => {
+  if (state.running) reset();
+});
