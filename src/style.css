@@ -1,0 +1,488 @@
+:root {
+  font-family: "DM Sans", sans-serif;
+  color: #dbe9ed;
+  background: #07121c;
+  font-synthesis: none;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: radial-gradient(ellipse at 75% 15%, #10303a66, transparent 48%);
+}
+button,
+a,
+.stage {
+  -webkit-tap-highlight-color: transparent;
+}
+header {
+  padding: 24px max(24px, calc((100vw - 1160px) / 2));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #213442;
+  background: #091722;
+}
+.brand {
+  font:
+    700 24px "Space Grotesk",
+    sans-serif;
+  letter-spacing: 1px;
+  text-decoration: none;
+  color: #e7f5f5;
+}
+.brand span {
+  display: block;
+  font: 9px monospace;
+  letter-spacing: 2px;
+  color: #8ba7b3;
+  margin-top: 5px;
+}
+.header-right {
+  display: flex;
+  gap: 32px;
+  font: 10px monospace;
+  letter-spacing: 1px;
+  color: #90a6b1;
+}
+.live {
+  color: #75e2bd;
+}
+main {
+  max-width: 1160px;
+  margin: auto;
+  padding: 0 24px;
+}
+nav {
+  display: flex;
+  justify-content: space-between;
+  margin: 26px 0 36px;
+  font: 10px monospace;
+  letter-spacing: 1px;
+  color: #829ba9;
+}
+nav b,
+nav i {
+  color: #70dfbf;
+}
+nav i {
+  font-style: normal;
+}
+.hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: center;
+  padding-bottom: 34px;
+}
+.eyebrow {
+  font: 10px monospace;
+  letter-spacing: 1.7px;
+  color: #79dfc3;
+  margin: 0 0 15px;
+}
+.eyebrow span {
+  padding: 0 8px;
+}
+h1 {
+  font:
+    600 clamp(40px, 5vw, 62px)/1.05 "Space Grotesk",
+    sans-serif;
+  letter-spacing: -2.5px;
+  margin: 0 0 20px;
+}
+h1 em {
+  font-style: normal;
+  color: #77e0c2;
+}
+.intro {
+  color: #9db0bb;
+  font-size: 14px;
+  line-height: 1.8;
+}
+.objective {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-top: 24px;
+}
+.objective > span {
+  color: #75e3bd;
+  font-size: 30px;
+}
+.objective strong {
+  font: 10px monospace;
+  letter-spacing: 1px;
+}
+.objective p {
+  font-size: 12px;
+  color: #9bb2be;
+  margin: 7px 0;
+}
+.companion {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+.companion > img {
+  width: 52%;
+  filter: drop-shadow(0 12px 30px #4fe3c21a);
+  animation: float 4s ease-in-out infinite;
+}
+.speech {
+  background: #102631;
+  border: 1px solid #2c4e59;
+  border-radius: 12px;
+  padding: 18px;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.speech b {
+  font: 11px monospace;
+  color: #76e2c3;
+}
+.speech span {
+  font-size: 8px;
+  color: #92aab5;
+}
+.speech p {
+  margin: 10px 0 0;
+}
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: #0d202b;
+  border: 1px solid #263d49;
+  border-radius: 9px;
+  margin-bottom: 30px;
+}
+.status-grid > div {
+  padding: 19px 24px;
+  border-right: 1px solid #263d49;
+}
+.status-grid > div:last-child {
+  border: 0;
+}
+small {
+  display: block;
+}
+.status-grid small {
+  font: 9px monospace;
+  letter-spacing: 1.4px;
+  color: #8da5b2;
+  margin-bottom: 10px;
+}
+.status-grid strong {
+  font:
+    500 12px "Space Grotesk",
+    sans-serif;
+}
+.status-grid strong span {
+  color: #88a3af;
+  margin-left: 8px;
+}
+.workspace {
+  border: 1px solid #263e4c;
+  background: #0b1a25;
+  border-radius: 12px;
+  padding: 26px;
+}
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+h2 {
+  font:
+    500 21px "Space Grotesk",
+    sans-serif;
+  margin: 0 0 10px;
+  letter-spacing: -0.5px;
+}
+.section-heading .eyebrow {
+  margin-bottom: 8px;
+}
+.tag {
+  font: 8px monospace;
+  letter-spacing: 0.8px;
+  color: #9bb2bd;
+  border: 1px solid #304652;
+  border-radius: 4px;
+  padding: 7px 9px;
+}
+.instructions {
+  font-size: 12px;
+  color: #96acb7;
+  margin: 10px 0 24px;
+}
+.stages {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+}
+.stage {
+  position: relative;
+  background: linear-gradient(145deg, #142d3b, #0e202d);
+  border: 1px solid #304a59;
+  border-radius: 9px;
+  padding: 15px;
+  cursor: grab;
+  transition:
+    border-color 0.2s,
+    transform 0.2s;
+}
+.stage.selected {
+  border-color: #6cd8ba;
+  box-shadow: 0 0 0 1px #6cd8ba22;
+}
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  font: 10px monospace;
+  color: #91aab7;
+}
+.stage-icon {
+  font-size: 30px;
+  color: #7bdcc5;
+  margin: 18px 0 15px;
+}
+.stage strong {
+  font:
+    600 14px "Space Grotesk",
+    sans-serif;
+  letter-spacing: 1px;
+}
+.stage small {
+  font-size: 11px;
+  color: #9bb3bf;
+  margin: 7px 0 18px;
+}
+.move {
+  display: flex;
+  gap: 7px;
+}
+.move button {
+  padding: 3px 12px;
+  background: #1b3544;
+  color: #bed4df;
+  border: 1px solid #314c5d;
+  font-size: 16px;
+}
+.console {
+  margin-top: 24px;
+  background: #081722;
+  border: 1px solid #243d49;
+  border-radius: 7px;
+  padding: 14px 18px;
+}
+.console-title {
+  display: flex;
+  justify-content: space-between;
+  font: 9px monospace;
+  letter-spacing: 1px;
+  color: #8daab7;
+}
+.console-title span:last-child {
+  color: #76e2bd;
+}
+#game {
+  height: 50px;
+  max-width: 700px;
+  margin: auto;
+}
+#game canvas {
+  display: block;
+}
+#feedback {
+  font: 11px/1.7 monospace;
+  margin: 6px 0 0;
+  color: #adc6d2;
+  min-height: 38px;
+}
+.actions {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  margin-top: 22px;
+}
+.actions > span {
+  color: #8ea6b2;
+  font-size: 10px;
+}
+.actions .secondary {
+  margin-left: auto;
+}
+button {
+  border: 0;
+  border-radius: 5px;
+  background: #78e1bf;
+  color: #08221d;
+  padding: 12px 20px;
+  font:
+    600 12px "DM Sans",
+    sans-serif;
+  cursor: pointer;
+}
+button:hover:not(:disabled) {
+  filter: brightness(1.15);
+}
+button.secondary {
+  background: transparent;
+  border: 1px solid #34505f;
+  color: #c2d8e0;
+}
+button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+:focus-visible {
+  outline: 3px solid #d0fff0;
+  outline-offset: 4px;
+}
+.bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 20px;
+  margin: 22px 0;
+}
+.bottom-grid section {
+  background: #0c1e29;
+  border: 1px solid #263e4b;
+  border-radius: 9px;
+  padding: 24px;
+}
+.bottom-grid p:not(.eyebrow) {
+  font-size: 12px;
+  line-height: 1.8;
+  color: #9eb5c0;
+}
+.evidence .tag {
+  display: inline-block;
+  margin-top: 8px;
+}
+.doc {
+  display: flex;
+  gap: 18px;
+}
+.doc img {
+  width: 78px;
+  height: 78px;
+}
+.doc h2 {
+  font-size: 18px;
+}
+.doc button {
+  padding: 8px 14px;
+}
+#summary {
+  border: 1px solid #75e1bd;
+  background: #112e32;
+  border-radius: 10px;
+  padding: 30px;
+  margin: 24px 0;
+}
+#summary p {
+  font-size: 14px;
+  line-height: 1.8;
+}
+footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 18px 0 28px;
+  border-top: 1px solid #233946;
+  color: #829ba8;
+  font: 9px monospace;
+  letter-spacing: 1px;
+}
+[hidden] {
+  display: none !important;
+}
+@keyframes float {
+  50% {
+    transform: translateY(-7px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+@media (max-width: 760px) {
+  .header-right {
+    display: none;
+  }
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .companion {
+    max-width: 430px;
+  }
+  .companion > img {
+    width: 38%;
+  }
+  .status-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .status-grid > div {
+    padding: 16px;
+  }
+  .stages {
+    grid-template-columns: 1fr;
+  }
+  .stage {
+    display: grid;
+    grid-template-columns: 30px 42px 1fr auto;
+    gap: 8px;
+    align-items: center;
+    padding: 12px;
+  }
+  .stage-icon {
+    margin: 0;
+    font-size: 24px;
+  }
+  .card-top span:last-child {
+    display: none;
+  }
+  .stage small {
+    grid-column: 3;
+    grid-row: 2;
+    margin: 0;
+  }
+  .move {
+    grid-column: 4;
+    grid-row: 1/3;
+  }
+  .section-heading .tag {
+    display: none;
+  }
+  .workspace {
+    padding: 18px;
+  }
+  .actions {
+    flex-wrap: wrap;
+  }
+  .actions > span {
+    display: none;
+  }
+  .actions .secondary {
+    margin-left: 0;
+  }
+  .bottom-grid {
+    grid-template-columns: 1fr;
+  }
+  footer {
+    gap: 20px;
+    line-height: 1.8;
+  }
+  nav span:last-child {
+    display: none;
+  }
+  main {
+    padding: 0 16px;
+  }
+}
