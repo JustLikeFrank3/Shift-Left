@@ -209,3 +209,42 @@ test("missing score leaves effects and mission controls usable", async ({
   await page.locator("#start-secret").click();
   await expect(page.locator("#scenario-title")).toHaveText("The Leaked Secret");
 });
+
+test("music stays silent when volume is zeroed during a scheduled cue fade", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const observed = window as unknown as { musicGain: GainNode };
+    const original = BiquadFilterNode.prototype.connect;
+    BiquadFilterNode.prototype.connect = function (...args: unknown[]) {
+      if (args[0] instanceof GainNode) observed.musicGain = args[0];
+      return Reflect.apply(original, this, args);
+    };
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Sound off", exact: true }).click();
+  await expect(page.locator("#music-status")).toContainText("Now playing");
+  // PATCH's cue schedules music gain recovery half a second into the future.
+  await page
+    .getByRole("button", {
+      name: "PATCH, assemble the practice pipeline",
+      exact: true,
+    })
+    .click();
+  await page
+    .getByRole("slider", { name: "Music volume", exact: true })
+    .fill("0");
+  await page.waitForTimeout(1100);
+  const gain = await page.evaluate(
+    () => (window as unknown as { musicGain: GainNode }).musicGain.gain.value,
+  );
+  expect(gain).toBeLessThan(0.0001);
+  // Mission mood changes must respect the same user-selected silence.
+  await page.locator("#start-secret").click();
+  await page.waitForTimeout(600);
+  expect(
+    await page.evaluate(
+      () => (window as unknown as { musicGain: GainNode }).musicGain.gain.value,
+    ),
+  ).toBeLessThan(0.0001);
+});

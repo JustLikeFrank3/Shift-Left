@@ -27,6 +27,7 @@ export function setMusicMood(next: MusicMood) {
     context.currentTime,
     1.2,
   );
+  musicBus.gain.cancelScheduledValues(context.currentTime);
   musicBus.gain.setTargetAtTime(musicLevel(), context.currentTime, 0.6);
 }
 function tone(
@@ -193,8 +194,10 @@ export function mountAudio() {
   };
   controls.querySelector<HTMLInputElement>("#music-volume")!.oninput = (e) => {
     musicVolume = Number((e.target as HTMLInputElement).value) / 100;
-    if (context && musicBus)
+    if (context && musicBus) {
+      musicBus.gain.cancelScheduledValues(context.currentTime);
       musicBus.gain.setTargetAtTime(musicLevel(), context.currentTime, 0.05);
+    }
   };
   document.addEventListener("visibilitychange", () => {
     if (!context) return;

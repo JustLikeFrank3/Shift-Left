@@ -446,11 +446,12 @@
       {
         "id": "patch",
         "label": "Parameterize search query",
-        "detail": "Bind input as data; invalidate previous scan evidence.",
+        "detail": "Bind input as data; invalidate scans and require the patched source to be redeployed to staging.",
         "effects": {
           "parameterized": true,
           "sast": false,
-          "dast": false
+          "dast": false,
+          "staging": false
         },
         "requires": ["sast"],
         "evidence": ["sast"],
@@ -460,7 +461,7 @@
       {
         "id": "triage",
         "label": "Document fixture false positive",
-        "detail": "Record test-only reachability evidence for F-02; keep F-01 actionable.",
+        "detail": "Record test-only reachability evidence for F-02 without suppressing the real injection finding.",
         "effects": {
           "triaged": true
         },
@@ -472,9 +473,10 @@
       {
         "id": "stage",
         "label": "Deploy isolated staging target",
-        "detail": "Start a synthetic preproduction target for dynamic testing.",
+        "detail": "Deploy the current source to a synthetic preproduction target; rerun dynamic testing after deployment.",
         "effects": {
-          "staging": true
+          "staging": true,
+          "dast": false
         },
         "requires": [],
         "evidence": [],

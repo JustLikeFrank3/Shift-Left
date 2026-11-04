@@ -99,16 +99,27 @@ export function inspectEvidence(
   return { ...m, inspected: [...m.inspected, id] };
 }
 export function evidenceText(m: CampaignMission, e: Evidence): string {
+  if (m.id === 5 && e.id === "sast" && m.flags.sast && m.flags.parameterized)
+    return (
+      "F-01 RESOLVED / search.ts:12\nInput is bound as data, not SQL syntax.\n" +
+      (m.flags.triaged
+        ? "F-02 FALSE POSITIVE / non-executable fixture; reachability evidence documented."
+        : "F-02 / fixtures/example.txt\nReview the non-executable fixture's reachability evidence.")
+    );
   if (m.id === 5 && e.id === "dast" && m.flags.dast && m.flags.parameterized)
     return "DAST PASSED: synthetic injection cannot alter query structure.\nScope: demo search endpoint only.";
-  if (
-    m.id === 6 &&
-    e.id === "sca" &&
-    m.flags.sca &&
-    m.flags.locked &&
-    !m.flags.breaking
-  )
-    return "SCA PASSED: resolved demo-parser@2.1 is outside the synthetic affected range.\nNo known finding in this demo inventory; this is not a security guarantee.";
+  if (m.id === 6 && e.id === "sbom" && m.flags.sbom && m.flags.locked)
+    return m.flags.breaking
+      ? "demo-shop → demo-renderer@2.0 → demo-parser@3.0\nInventory reflects the resolved major upgrade; application compatibility still needs verification."
+      : "demo-shop → demo-renderer@1.3 → demo-parser@2.1\nInventory reflects the resolved compatible patched dependency tree.";
+  if (m.id === 6 && e.id === "sca" && m.flags.sca && m.flags.locked)
+    return (
+      `SCA PASSED: resolved demo-parser@${m.flags.breaking ? "3.0" : "2.1"} is outside the synthetic affected range.\n` +
+      "No known finding in this demo inventory; this is not a security guarantee." +
+      (m.flags.breaking
+        ? "\nRenderer 2.0 changes the application API; SCA does not verify compatibility."
+        : "")
+    );
   if (m.id === 6 && e.id === "lock" && m.flags.locked && m.flags.breaking)
     return "demo-renderer 2.0 / demo-parser 3.0\nResolved, but the application still calls the old rendering API.";
   if (m.id === 2 && e.id === "test-report" && m.flags["logic-fixed"])

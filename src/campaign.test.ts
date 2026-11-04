@@ -104,6 +104,55 @@ describe("campaign transitions", () => {
       ),
     ).toContain("DAST PASSED");
   });
+  it("requires redeploying patched source before DAST can validate staging", () => {
+    let m = route(5, ["sast", "stage", "dast", "patch", "sast", "triage"]);
+    expect(m.flags.staging).toBe(false);
+    expect(m.flags.dast).toBe(false);
+    const rejected = act(m, "dast");
+    expect(rejected.feedback).toContain("Prerequisite: staging");
+    expect(rejected.flags.dast).toBe(false);
+    expect(runScenario(rejected).failedStage).toBe("STAGE");
+    m = act(rejected, "stage");
+    expect(m.flags.dast).toBe(false);
+    expect(runScenario(m).completed).toBe(false);
+    expect(runScenario(act(m, "dast")).completed).toBe(true);
+  });
+  it("reports the repaired source and documented fixture after fresh SAST", () => {
+    const report = scenario(5).evidence.find((e) => e.id === "sast")!;
+    const patched = route(5, ["sast", "patch"]);
+    expect(evidenceText(patched, report)).toBe("SAST has not run.");
+    const scanned = act(patched, "sast");
+    expect(evidenceText(scanned, report)).toContain("F-01 RESOLVED");
+    expect(evidenceText(scanned, report)).not.toContain("F-01 HIGH");
+    expect(evidenceText(scanned, report)).toContain("Review");
+    expect(evidenceText(act(scanned, "triage"), report)).toContain(
+      "F-02 FALSE POSITIVE",
+    );
+  });
+  it.each([
+    ["upgrade", "1.3", "2.1"],
+    ["major", "2.0", "3.0"],
+  ])(
+    "refreshes inventory and advisory reports for %s",
+    (action, renderer, parser) => {
+      const m = route(6, ["sbom", "sca", action, "lock", "sbom", "sca"]);
+      const report = (id: string) =>
+        evidenceText(
+          m,
+          scenario(6).evidence.find((e) => e.id === id)!,
+        );
+      expect(report("sbom")).toContain(`demo-renderer@${renderer}`);
+      expect(report("sbom")).toContain(`demo-parser@${parser}`);
+      expect(report("sbom")).not.toContain("demo-parser@2.0");
+      expect(report("lock")).toContain(`demo-renderer ${renderer}`);
+      expect(report("lock")).toContain(`demo-parser ${parser}`);
+      expect(report("sca")).toContain(`resolved demo-parser@${parser}`);
+      if (action === "major") {
+        expect(report("sca")).toContain("does not verify compatibility");
+        expect(runScenario(act(m, "regression")).completed).toBe(false);
+      }
+    },
+  );
   it("major upgrade breaks regressions and requires renewed lockfile, inventory and checks", () => {
     let m = route(6, [
       "sbom",
