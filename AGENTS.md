@@ -1,0 +1,3 @@
+# Codex instructions
+
+Read README.md and SHIFT_LEFT.md before implementation. Build a playable browser-only game, not a static mockup. Start with mission 1 and a deterministic state machine, then add Phaser UI. Prefer small typed modules, scenario JSON, unit tests and browser smoke tests. No backend, accounts, analytics, badge support, employer-specific content, or real credentials. Use synthetic security examples. Keep educational explanations accurate, concise and optional for experienced players. Preserve PATCH and DOC character names. Do not represent the game as official Accenture training. Run tests and build before proposing merges.
