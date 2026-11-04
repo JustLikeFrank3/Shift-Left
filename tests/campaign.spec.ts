@@ -30,7 +30,7 @@ for (const s of data)
   }) => {
     const errors: string[] = [];
     page.on("pageerror", (e) => errors.push(e.message));
-    await page.goto("/");
+    await page.goto("/?mode=workbench");
     await page
       .getByText("Campaign missions / 30-second tutorial + 11 incidents", {
         exact: true,
@@ -89,7 +89,7 @@ for (const s of data)
 test("tutorial can be skipped directly into the secret incident, spatial effort and audio work", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/?mode=workbench");
   await expect(page.locator(".tutorial-banner")).toBeVisible();
   await page
     .getByRole("button", { name: "Skip tutorial — respond to leak" })
@@ -145,7 +145,7 @@ test("PATCH tutorial assembly reaches incident continuation and storage failure 
       },
     }),
   );
-  await page.goto("/");
+  await page.goto("/?mode=workbench");
   await expect(page.locator("#summary")).toBeHidden();
   await page
     .getByRole("button", {
@@ -173,7 +173,7 @@ test("score is opt-in, decodes locally, and music and effects have independent c
   page.on("request", (r) => {
     if (r.url().endsWith("signal-in-the-dark.mp3")) requests++;
   });
-  await page.goto("/");
+  await page.goto("/?mode=workbench");
   expect(requests).toBe(0);
   await page.locator("#start-secret").click();
   await page.getByRole("button", { name: "Sound off", exact: true }).click();
@@ -198,7 +198,7 @@ test("missing score leaves effects and mission controls usable", async ({
   await page.route("**/signal-in-the-dark.mp3", (route) =>
     route.fulfill({ status: 404, body: "Missing" }),
   );
-  await page.goto("/");
+  await page.goto("/?mode=workbench");
   await page.getByRole("button", { name: "Sound off", exact: true }).click();
   await expect(page.locator("#music-status")).toContainText(
     "Music unavailable",
@@ -221,7 +221,7 @@ test("music stays silent when volume is zeroed during a scheduled cue fade", asy
       return Reflect.apply(original, this, args);
     };
   });
-  await page.goto("/");
+  await page.goto("/?mode=workbench");
   await page.getByRole("button", { name: "Sound off", exact: true }).click();
   await expect(page.locator("#music-status")).toContainText("Now playing");
   // PATCH's cue schedules music gain recovery half a second into the future.
