@@ -1,4 +1,4 @@
-name: Validate Mission 01
+name: Validate game
 on:
   pull_request:
   push:

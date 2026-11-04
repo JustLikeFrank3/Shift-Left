@@ -22,14 +22,14 @@ test("investigate, recover from invalid order, deploy and replay", async ({
 }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto("/");
+  await page.goto("/?mode=workbench");
   await expect(
     page.getByRole("heading", { name: "Good code. Great delivery." }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Ask DOC" }).click();
   await expect(page.locator("#hint")).toBeVisible();
   await page.getByRole("button", { name: "Run pipeline" }).click();
-  await expect(page.getByRole("status")).toContainText("Not quite");
+  await expect(page.locator("#feedback")).toContainText("Not quite");
   await solve(page);
   await page.getByRole("button", { name: "Run pipeline" }).click();
   await expect(
@@ -49,7 +49,7 @@ test("investigate, recover from invalid order, deploy and replay", async ({
 test("reset cancels deployment and keyboard focus follows stage", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/?mode=workbench");
   await page.getByRole("article", { name: "PROD stage" }).focus();
   await page.keyboard.press("ArrowRight");
   await expect(page.getByRole("article", { name: "PROD stage" })).toBeFocused();
@@ -72,7 +72,7 @@ test("drag reorders cards", async ({ page }, testInfo) => {
     testInfo.project.name === "mobile",
     "Touch users have labeled move buttons",
   );
-  await page.goto("/");
+  await page.goto("/?mode=workbench");
   await page
     .getByRole("article", { name: "SOURCE stage" })
     .dragTo(page.getByRole("article", { name: "PROD stage" }));

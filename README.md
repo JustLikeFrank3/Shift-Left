@@ -2,7 +2,7 @@
 
 **Fix tomorrow's bugs yesterday.**
 
-SHIFT LEFT is a browser-based, story-driven DevSecOps control-room puzzle game for GitHub Game Off 2026. Players learn by investigating failures, changing simulated pipeline controls, and validating consequences.
+SHIFT LEFT is a browser-based, side-scrolling DevSecOps adventure for GitHub Game Off 2026. Players learn by investigating failures, changing simulated pipeline controls, and validating consequences.
 
 ## Audience
 
@@ -12,7 +12,7 @@ Beginners through experienced engineers. Three acts: Apprentice, Engineer, Archi
 
 Play as PATCH, a cheerful robot engineer. Supporting cast: LEGACY (veteran), SHIP (release manager), SENTINEL (security analyst), OPS (reliability engineer), DOC (learning companion). Final antagonist: TECH DEBT, the accumulated consequences of shortcuts.
 
-## Stack (planned)
+## Stack
 
 Phaser 3, TypeScript, Vite, data-driven deterministic scenario engine, Vitest, Playwright, GitHub Actions, HTML5 itch.io distribution.
 
@@ -20,13 +20,13 @@ See [SHIFT_LEFT.md](SHIFT_LEFT.md) for the game design and [AGENTS.md](AGENTS.md
 
 ## Status
 
-Mission 01 is playable: configure, investigate, validate and deploy in a browser-only sandbox. Missions 02–12 remain planned.
+The default game is a full-screen side-scrolling delivery grid. Move PATCH through SOURCE → BUILD → TEST → STAGE → PROD, jump between service platforms, recover signal fragments and pulse away debt mites. The opening incident is The Leaked Secret; all eleven incident scenarios use the deterministic campaign engine. The original ordering exercise remains available in the development workbench, while the world opens with a short optional controls tutorial.
 
 ## Learning and workplace use
 
 Designed as an independent, public, informal learning resource, not official Accenture training or a certification. Use fictional systems and synthetic data only; do not add client code, company materials, secrets, or internal workflows. Review employer policies before workplace promotion.
 
-## Play Mission 01 locally
+## Play locally
 
 Requires Node.js 24 or newer.
 
@@ -35,7 +35,32 @@ npm ci
 npm run dev
 ```
 
-Arrange SOURCE, BUILD, TEST, STAGE and PROD using drag-and-drop, the labeled move buttons, or the arrow keys while a card is focused. Select cards to inspect their roles. DOC offers optional guidance. Run the pipeline to validate your order and watch the simulated deployment. Restart safely at any point; completed missions can be replayed.
+Click **Enter the grid**. PATCH starts beside the leaking production terminal. Connect, revoke the exposed credential, then trace its cause left through the vault and source foundry. Changes affect the world: the red leak seals, repaired terminals light up, and a passing release carries PATCH back through the pipeline into the next sector.
+
+| Control        | Action                       |
+| -------------- | ---------------------------- |
+| A / D or ← / → | Move                         |
+| Space, W or ↑  | Jump                         |
+| Shift          | Boost                        |
+| E              | Connect to a nearby terminal |
+| F              | Pulse nearby debt mites      |
+| R              | Validate the release         |
+| Q              | Open DOC                     |
+| Escape         | Close the current panel      |
+
+Touch controls support phones and tablets. Clicking a pipeline stage makes PATCH walk there with camera follow; it does not teleport the player. The Sectors menu opens any incident for practice. The 30-second controls guide is optional.
+
+Each terminal shows local evidence and operational actions. Code/configuration fixes can be made at any terminal, but shifting the repair left costs less effort: SOURCE 1 → BUILD 2 → TEST 4 → STAGE 8 → PROD 16. These are illustrative game units. Investigation, verification, containment and recovery stay free. Debt mites affect PATCH's shield, never erase mission evidence, and return PATCH to a nearby checkpoint if needed. Signal fragments are optional exploration rewards.
+
+Completed missions and selected sector are saved on this device. Active experiments reset on reload or sector change. Blocked storage does not prevent play.
+
+**DOC:** click Ask DOC or press Q, then type a question. Live mode uses the public ElevenLabs text-only agent and sends only the question, recent chat context and the synthetic mission snapshot after Send. It has no tools, microphone access or ability to change the game. A labeled local reference guide answers common terms and contextual hints without an AI request. If live chat cannot connect, the panel clearly identifies the local fallback. The game pauses movement input while typing. Public agent configuration is in `public/doc-agent.json`; no provider API key belongs in this client.
+
+**Music:** the original _Signal in the Dark_ score plays if selected at entry, with independent music/FX volume. The loop crossfades, changes mood with the incident, ducks under cues and pauses with the tab. The first take remains ready for musical audition; see [audio provenance](public/audio/README.md).
+
+Live DOC uses the verified public agent’s permitted per-session text-only override. CI tests mock the external service; the live WebSocket could not be verified from the managed development network. Its timeout and explicit local fallback are tested.
+
+The former control-room interface remains at `/?mode=workbench` for engine regression testing. It is not the default play experience.
 
 ## Validation
 
@@ -46,6 +71,6 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Playwright covers desktop and mobile mission completion, invalid-order recovery, hints, replay, keyboard focus, reset during deployment, browser errors and overflow, plus desktop drag-and-drop. `dist/` is the production build. The deterministic engine lives in `src/mission.ts`, independently of the Phaser telemetry renderer and DOM controls. All deployment data is fictional; nothing reaches a real environment. Motion respects the reduced-motion preference.
+Playwright covers the live world on desktop/mobile: movement, jumping, camera follow, containment, walking between stations, the complete leak repair, release animation, sector restart, touch controls, and overflow. DOC tests mock the external connection and cover questions, context, cancellation, fallback and typing without moving PATCH. The original workbench still tests every deterministic scenario, audio and persistence. `dist/` is the production build. Deterministic engines live in `src/mission.ts` (tutorial) and `src/campaign.ts` (incidents), with scenario definitions in `src/scenarios.json`, independently of the Phaser world and UI. `src/world-model.ts` maps evidence and operational actions to physical delivery regions; `src/side-scroll.ts` owns movement, collisions and scene transitions. All deployment data is fictional; nothing reaches a real environment. Motion respects the reduced-motion preference.
 
 PATCH and DOC use local SVG artwork based on the documented navy, cyan, teal, mint and white character direction. No external image or font services are required.
