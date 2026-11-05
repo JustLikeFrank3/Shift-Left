@@ -75,8 +75,9 @@ PATCH begins beside the live production leak, with DOC floating nearby. The corr
 | Q | Open DOC's offline guide |
 | R | Validate the incident |
 | M | Toggle the original score |
-| 1 / 2 / 3 or mouse | Choose an operation in a panel |
+| 1 / 2 / 3 (4 in help) or mouse | Choose an operation in a panel |
 | Escape / H | Close a panel or open help (H also works in Play-in-Editor, where Escape stops play) |
+| 4 in help | Quit the game |
 
 The first panel explains the controls. Standard mode has a three-minute active exposure window; guided mode removes time-based failure. Reading terminal/help/DOC panels pauses that window. Revoking an exposed credential is free and stops its exploitation, so containment is accessible before longer investigation. Wrong routes can re-expose the replacement. Repairs draw from 24 effort; free investigation and containment never require leftward travel. Retry starts a fresh incident if pressure or poor spending makes the run unsalvageable.
 
@@ -99,7 +100,7 @@ The archive goes to `unreal/build/Linux/` by default; launch it with `build/Linu
 SL_GAME="$PWD/build/Linux/ShiftLeft.sh" ./scripts/playtest-linux.sh -     # packaged build
 ```
 
-Each scenario (`complete`, `wrong`, `budget`, `guided`, `pause`) starts the game with `-SLAutoplay=<scenario>`, sends key events through Slate into the normal input bindings, saves in-engine screenshots and logs PASS/FAIL checks to `playtest/<scenario>.log`. A window opens; do not type into it while it runs. It does not replace a human playtest: it does not use the OS keyboard, the mouse, or listen to the audio.
+Each scenario (`complete`, `wrong`, `budget`, `guided`, `pause`, `quit`) starts the game with `-SLAutoplay=<scenario>`, sends key events through Slate into the normal input bindings, saves in-engine screenshots and logs PASS/FAIL checks to `playtest/<scenario>.log`. A window opens; do not type into it while it runs. It does not replace a human playtest: it does not use the OS keyboard, the mouse, or listen to the audio.
 
 ## Source and verification
 

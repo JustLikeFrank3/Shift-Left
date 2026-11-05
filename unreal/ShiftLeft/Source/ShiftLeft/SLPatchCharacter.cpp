@@ -269,6 +269,7 @@ void ASLPatchCharacter::Music() { if (ASLGameMode* GM = Game()) GM->ToggleMusic(
 void ASLPatchCharacter::Choice1() { if (ASLGameMode* GM = Game()) GM->SelectChoice(0); }
 void ASLPatchCharacter::Choice2() { if (ASLGameMode* GM = Game()) GM->SelectChoice(1); }
 void ASLPatchCharacter::Choice3() { if (ASLGameMode* GM = Game()) GM->SelectChoice(2); }
+void ASLPatchCharacter::Choice4() { if (ASLGameMode* GM = Game()) GM->SelectChoice(3); }
 
 void ASLPatchCharacter::SetupPlayerInputComponent(UInputComponent* Input)
 {
@@ -285,4 +286,5 @@ void ASLPatchCharacter::SetupPlayerInputComponent(UInputComponent* Input)
     Input->BindAction(TEXT("Choice1"), IE_Pressed, this, &ASLPatchCharacter::Choice1);
     Input->BindAction(TEXT("Choice2"), IE_Pressed, this, &ASLPatchCharacter::Choice2);
     Input->BindAction(TEXT("Choice3"), IE_Pressed, this, &ASLPatchCharacter::Choice3);
+    Input->BindAction(TEXT("Choice4"), IE_Pressed, this, &ASLPatchCharacter::Choice4);
 }

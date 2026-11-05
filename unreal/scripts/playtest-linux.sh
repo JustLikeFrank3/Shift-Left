@@ -4,9 +4,9 @@
 #   ./scripts/playtest-linux.sh /path/to/UE_5.8 [scenario ...]          # editor build, -game
 #   SL_GAME=/path/to/ShiftLeft.sh ./scripts/playtest-linux.sh - [scenario ...]  # packaged build
 set -u
-engine_dir=${1:?Usage: ./scripts/playtest-linux.sh /path/to/UnrealEngine|- [complete wrong budget guided pause]}
+engine_dir=${1:?Usage: ./scripts/playtest-linux.sh /path/to/UnrealEngine|- [complete wrong budget guided pause quit]}
 shift
-scenarios=${*:-complete wrong budget guided pause}
+scenarios=${*:-complete wrong budget guided pause quit}
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 unreal_dir=$(CDPATH= cd -- "$script_dir/.." && pwd)
 project_file="$unreal_dir/ShiftLeft/ShiftLeft.uproject"

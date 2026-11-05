@@ -54,4 +54,5 @@ private:
     void Choice1();
     void Choice2();
     void Choice3();
+    void Choice4();
 };

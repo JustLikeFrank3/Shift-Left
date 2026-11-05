@@ -56,7 +56,7 @@ Close Unreal before an external C++ rebuild. Generated assets are real Unreal fi
 
 ## 4. First playtest
 
-PATCH should start beside PRODUCTION with DOC visible. Use A/D or arrows to move, Space to jump, E to connect, F for PATCH!, Q for the offline DOC guide, R to validate, M to toggle music, Escape or H for help (Escape stops Play-in-Editor), and 1/2/3 or the mouse to choose operations.
+PATCH should start beside PRODUCTION with DOC visible. Use A/D or arrows to move, Space to jump, E to connect, F for PATCH!, Q for the offline DOC guide, R to validate, M to toggle music, Escape or H for help (Escape stops Play-in-Editor; 4 there quits), and 1/2/3 or the mouse to choose operations.
 
 Check these paths:
 
@@ -86,7 +86,7 @@ Known issues seen so far:
 - The editor rewrites `Config/DefaultInput.ini` and `DefaultEngine.ini` (expanded defaults, an Android file-server token). The build, package and playtest scripts restore `Config/` when they finish; review `git diff unreal/ShiftLeft/Config` before committing after saving settings in the editor.
 - UAT stages with the first `env` on `PATH`. A sourceable `~/.local/bin/env` breaks staging with `Permission denied`; `package-linux.sh` puts `/usr/bin` first.
 - Dragging the window recreates the Vulkan swapchain every frame (`LogVulkanRHI: Creating new VK swapchain`, about 220 times in 14 seconds in one manual run) and stutters while the window moves. The player confirmed it happened only while moving the window; play is unaffected.
-- There is no in-game Quit yet; close the window, press Alt+F4, or use the console (`` ` `` then `quit`).
+- Quit is the fourth choice in the help panel (Escape or H, then 4 or click). Closing the window or Alt+F4 also exits.
 - Unreal logs the audio "hardware device" as the first enumerated output, but SDL opens the system default (check the `Opening ... audio device` line).
 
 ## Committed generated content and other platforms
@@ -106,10 +106,10 @@ Recorded 2026-11-04 on Ubuntu 26.04 LTS, Ryzen 7 8845HS, NVIDIA RTX 5060 Ti 16 G
 | `test-core.sh` / `verify-source.py` | 68 checks pass / preflight passes |
 | `build-linux.sh` | `ShiftLeftEditor` compiles; 9 FBX meshes, 13 materials, the score and `DeliveryGrid` saved |
 | `package-linux.sh` | Development package built, 1.2 GB, `build/Linux/ShiftLeft.sh` |
-| `playtest-linux.sh`, editor `-game` | complete, wrong, budget, guided, pause: all PASS |
-| `playtest-linux.sh`, packaged | complete, wrong, budget, guided, pause: all PASS |
+| `playtest-linux.sh`, editor `-game` | complete, wrong, budget, guided, pause, quit: all PASS |
+| `playtest-linux.sh`, packaged | complete, wrong, budget, guided, pause, quit: all PASS |
 
-Scenario outcomes (identical in both builds): **complete** contains for 0 effort, repairs at SOURCE for 3, validates with grade S and 0 mistakes. **wrong** packages the replacement at PRODUCTION (16 effort, pressure 25, exposure resumes), revokes and reissues, then validates at 19 effort with 1 mistake. **budget** spends 24/24, an unaffordable check changes nothing, and Escape > Retry restores 0/24 at PRODUCTION. **guided** survives 241 s of exposure at 0 pressure; standard fails at exactly 180.0 s and retry starts fresh. **pause** shows DOC stopping both the exposure clock and movement, and M stopping and restarting the score.
+Scenario outcomes (identical in both builds): **complete** contains for 0 effort, repairs at SOURCE for 3, validates with grade S and 0 mistakes. **wrong** packages the replacement at PRODUCTION (16 effort, pressure 25, exposure resumes), revokes and reissues, then validates at 19 effort with 1 mistake. **budget** spends 24/24, an unaffordable check changes nothing, and Escape > Retry restores 0/24 at PRODUCTION. **guided** survives 241 s of exposure at 0 pressure; standard fails at exactly 180.0 s and retry starts fresh. **pause** shows DOC stopping both the exposure clock and movement, and M stopping and restarting the score. **quit** opens help with H and exits through the fourth choice (end reason Quit).
 
 Screenshots confirmed: PATCH and DOC face the camera with their faces readable; PATCH's articulated limbs swing and he turns three-quarters toward travel; Space jumps and the deck holds; terminals and racks face the corridor; PATCH! raises his arm, shows a rising callout and flashes mint (coral when the route re-exposes the replacement); HUD and panels are readable at 1600x900. Music played on the default output (Scarlett Solo USB). Rough frame rate from log timestamps: 70-110 fps at 1600x900 windowed, including screenshot stalls.
 

@@ -9,6 +9,7 @@
 #include "GameFramework/PawnMovementComponent.h"
 #include "Components/AudioComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "Sound/SoundBase.h"
 
 namespace
@@ -179,6 +180,12 @@ void ASLGameMode::SelectChoice(int32 Index)
     if (Panel == ESLPanel::Complete) { RestartIncident(); return; }
     if (Panel == ESLPanel::Help)
     {
+        if (Index == 3)
+        {
+            UE_LOG(LogTemp, Display, TEXT("SHIFT LEFT: quit requested from the field guide"));
+            UKismetSystemLibrary::QuitGame(this, UGameplayStatics::GetPlayerController(this, 0), EQuitPreference::Quit, false);
+            return;
+        }
         if (Index == 1) RestartIncident();
         else if (Index == 2)
         {
@@ -253,7 +260,8 @@ TArray<FSLChoice> ASLGameMode::GetChoices() const
     if (Panel == ESLPanel::Help) return {Choice(TEXT("Enter the delivery grid"), TEXT("Continue beside the live service. Reopen this guide with Escape.")),
         Choice(TEXT("Retry with a fresh budget"), TEXT("Restart from PRODUCTION and keep the selected difficulty.")),
         Choice(Incident.guided ? TEXT("Restart in standard mode") : TEXT("Restart in guided mode"),
-            Incident.guided ? TEXT("Fresh incident with time pressure while credentials remain exposed.") : TEXT("Fresh incident without the exposure deadline; routing decisions still matter."))};
+            Incident.guided ? TEXT("Fresh incident with time pressure while credentials remain exposed.") : TEXT("Fresh incident without the exposure deadline; routing decisions still matter.")),
+        Choice(TEXT("Quit SHIFT LEFT"), TEXT("Close the game. Progress in this incident is not saved."))};
     if (Panel == ESLPanel::Doc) return {Choice(TEXT("Return to PATCH"), TEXT("Resume the incident clock and continue your own investigation."))};
     if (Panel == ESLPanel::Complete) return {Choice(TEXT("Retry The Leaked Secret"), TEXT("Fresh incident, fresh effort budget. Compare a different approach."))};
     const int32 Cost = ShiftLeft::RepairCost(SelectedStage());

@@ -231,17 +231,24 @@ void ASLGameHUD::DrawPipeline(const ASLGameMode& Mode)
     Text(TEXT("A / D  MOVE     SPACE  JUMP"), 48.f, 817.f, 14.f, White);
     Text(TEXT("E  CONNECT     F  PATCH!     Q  DOC     R  VALIDATE     ESC / H  HELP"),
          48.f, 859.f, 13.f, Muted);
-    Text(TEXT("Choices: 1 / 2 / 3 or click"), 1316.f, 859.f, 13.f, Muted);
+    Text(TEXT("Choices: number keys or click"), 1316.f, 859.f, 13.f, Muted);
 }
 
 void ASLGameHUD::DrawPanel(ASLGameMode& Mode)
 {
     // A modal suspends the deterministic incident clock and character input.
     DrawRect(FLinearColor(0.f, .012f, .025f, .56f), 0.f, 0.f, Canvas->SizeX, Canvas->SizeY);
+    const TArray<FSLChoice> Choices = Mode.GetChoices();
+    const int32 Count = FMath::Min(Choices.Num(), 4);
+    // Four choices (help + Quit) use a taller panel with compact one-line rows.
+    const bool bCompact = Count > 3;
     constexpr float X = 232.f;
-    constexpr float Y = 170.f;
+    const float Y = bCompact ? 130.f : 170.f;
     constexpr float Width = 1136.f;
-    constexpr float Height = 578.f;
+    const float Height = bCompact ? 640.f : 578.f;
+    const float RowPitch = bCompact ? 72.f : 86.f;
+    const float RowHeight = bCompact ? 64.f : 76.f;
+    const float RowInset = bCompact ? -6.f : 0.f;
     Box(X + 8.f, Y + 8.f, Width, Height, FLinearColor(0.f, 0.f, 0.f, .38f));
     Box(X, Y, Width, Height, Ink);
     Rule(X, Y, Width, Teal, 3.f);
@@ -260,9 +267,7 @@ void ASLGameHUD::DrawPanel(ASLGameMode& Mode)
     Text(CloseLabel, X + Width - 148.f, Y + 27.f, 14.f, Muted);
     HitBox(X + Width - 160.f, Y + 12.f, 144.f, 36.f, TEXT("ClosePanel"), 20);
 
-    const TArray<FSLChoice> Choices = Mode.GetChoices();
-    const int32 Count = FMath::Min(Choices.Num(), 3);
-    const float ChoicesY = Y + Height - 64.f - Count * 86.f;
+    const float ChoicesY = Y + Height - 64.f - Count * RowPitch;
     const float BodyY = Y + 108.f;
     const int32 BodyLines = FMath::Max(1, FMath::FloorToInt((ChoicesY - BodyY - 14.f) / 24.3f));
     Wrapped(Mode.GetPanelBody(), X + 40.f, BodyY, Width - 80.f, 18.f, Muted, BodyLines);
@@ -271,21 +276,21 @@ void ASLGameHUD::DrawPanel(ASLGameMode& Mode)
     {
         const FSLChoice& Choice = Choices[Index];
         const FName Name(*FString::Printf(TEXT("Choice_%d"), Index));
-        const float ButtonY = ChoicesY + Index * 86.f;
+        const float ButtonY = ChoicesY + Index * RowPitch;
         const bool bHovered = HoveredBox == Name;
         const FLinearColor Background = bHovered && Choice.bEnabled
             ? FLinearColor(.07f, .22f, .25f, 1.f) : Surface;
-        Box(X + 40.f, ButtonY, Width - 80.f, 76.f, Background);
+        Box(X + 40.f, ButtonY, Width - 80.f, RowHeight, Background);
         Rule(X + 40.f, ButtonY, Width - 80.f,
              bHovered && Choice.bEnabled ? Teal : Hairline, 1.f);
-        Box(X + 56.f, ButtonY + 19.f, 34.f, 34.f,
+        Box(X + 56.f, ButtonY + 19.f + RowInset, 34.f, 34.f,
             Choice.bEnabled ? FLinearColor(.09f, .31f, .33f, 1.f) : Hairline);
-        Text(FString::FromInt(Index + 1), X + 67.f, ButtonY + 26.f, 19.f,
+        Text(FString::FromInt(Index + 1), X + 67.f, ButtonY + 26.f + RowInset, 19.f,
              Choice.bEnabled ? White : Muted);
-        Text(Choice.Label, X + 108.f, ButtonY + 13.f, 22.f,
+        Text(Choice.Label, X + 108.f, ButtonY + 13.f + RowInset * .6f, 22.f,
              Choice.bEnabled ? White : Muted);
-        Wrapped(Choice.Detail, X + 109.f, ButtonY + 43.f, Width - 260.f,
-                15.f, Muted, 2);
+        Wrapped(Choice.Detail, X + 109.f, ButtonY + 43.f + RowInset, Width - 260.f,
+                15.f, Muted, bCompact ? 1 : 2);
         if (!Choice.State.IsEmpty())
         {
             const float StateWidth = Measure(Choice.State, 13.f);
@@ -293,13 +298,14 @@ void ASLGameHUD::DrawPanel(ASLGameMode& Mode)
         }
         if (Choice.bEnabled)
         {
-            HitBox(X + 40.f, ButtonY, Width - 80.f, 76.f, Name, 10);
+            HitBox(X + 40.f, ButtonY, Width - 80.f, RowHeight, Name, 10);
         }
     }
     Rule(X + 40.f, Y + Height - 46.f, Width - 80.f, Hairline);
     Text(TEXT("INCIDENT CLOCK PAUSED WHILE READING"), X + 40.f, Y + Height - 29.f, 13.f, Teal);
-    Text(TEXT("1 / 2 / 3  SELECT     ESC  RETURN TO THE GRID"),
-         X + Width - 403.f, Y + Height - 29.f, 13.f, Muted);
+    const FString Footer = bCompact ? TEXT("1 - 4  SELECT     ESC  RETURN TO THE GRID")
+                                    : TEXT("1 / 2 / 3  SELECT     ESC  RETURN TO THE GRID");
+    Text(Footer, X + Width - 40.f - Measure(Footer, 13.f), Y + Height - 29.f, 13.f, Muted);
 }
 
 void ASLGameHUD::NotifyHitBoxClick(FName BoxName)

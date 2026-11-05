@@ -294,9 +294,22 @@ void ASLAutoplay::Build()
         Tap(EKeys::M, .5f);
         Expect(TEXT("M restarts music"), [](const ASLGameMode& M) { return M.IsMusicPlaying(); });
     }
+    else if (Scenario == TEXT("quit"))
+    {
+        Tap(EKeys::One, 1.f);
+        Tap(EKeys::H, .6f);
+        Shot(TEXT("help-with-quit"));
+        Expect(TEXT("H opens the field guide with a Quit choice"), [](const ASLGameMode& M) { return M.GetPanel() == ESLPanel::Help && M.GetChoices().Num() == 4; });
+        Steps.Add([this](float) { bQuitPressed = Failures == 0; SendKey(EKeys::Four, true); return true; });
+        Wait(.06f);
+        Steps.Add([this](float) { SendKey(EKeys::Four, false); return true; });
+        // Reaching the next step means the game is still running.
+        Wait(6.f);
+        Steps.Add([this](float) { bQuitPressed = false; ++Failures; UE_LOG(LogSLAutoplay, Error, TEXT("FAIL pressing 4 in the field guide did not quit")); return true; });
+    }
     else
     {
-        Steps.Add([this](float) { ++Failures; UE_LOG(LogSLAutoplay, Error, TEXT("Unknown scenario '%s' (complete|wrong|budget|guided|pause)"), *Scenario); return true; });
+        Steps.Add([this](float) { ++Failures; UE_LOG(LogSLAutoplay, Error, TEXT("Unknown scenario '%s' (complete|wrong|budget|guided|pause|quit)"), *Scenario); return true; });
     }
     Log(TEXT("final"));
 }
@@ -316,7 +329,20 @@ void ASLAutoplay::Tick(float DeltaSeconds)
     if (StepIndex == Steps.Num())
     {
         UE_LOG(LogSLAutoplay, Display, TEXT("AUTOPLAY RESULT %s scenario=%s failures=%d"), Failures == 0 ? TEXT("PASS") : TEXT("FAIL"), *Scenario, Failures);
+        bResultLogged = true;
         ++StepIndex;
         FPlatformMisc::RequestExit(false);
     }
+}
+
+void ASLAutoplay::EndPlay(const EEndPlayReason::Type Reason)
+{
+    // The quit scenario passes only if the game shuts down after the Quit choice.
+    if (!bResultLogged && Scenario == TEXT("quit"))
+    {
+        const bool bPass = bQuitPressed && Failures == 0 && Reason == EEndPlayReason::Quit;
+        UE_LOG(LogSLAutoplay, Display, TEXT("AUTOPLAY RESULT %s scenario=quit failures=%d endReason=%d"), bPass ? TEXT("PASS") : TEXT("FAIL"), bPass ? 0 : FMath::Max(Failures, 1), static_cast<int32>(Reason));
+        bResultLogged = true;
+    }
+    Super::EndPlay(Reason);
 }

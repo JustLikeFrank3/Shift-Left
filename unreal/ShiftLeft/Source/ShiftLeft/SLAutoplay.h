@@ -20,6 +20,7 @@ public:
     ASLAutoplay();
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaSeconds) override;
+    virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 
 private:
     using FStep = TFunction<bool(float)>;
@@ -28,6 +29,8 @@ private:
     float StepTime = 0.f;
     int32 ShotIndex = 0;
     int32 Failures = 0;
+    bool bQuitPressed = false;
+    bool bResultLogged = false;
     FString Scenario;
     TSet<FKey> HeldKeys;
 
