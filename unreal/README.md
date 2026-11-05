@@ -27,7 +27,7 @@ Epic's [Linux quickstart](https://dev.epicgames.com/documentation/unreal-engine/
 
 ## Get this branch without merging
 
-This checkpoint is currently saved locally on `feat/unreal-linux-slice`; remote publication has not completed. Use the current workspace checkout now. The fetch/clone commands below apply after the branch is published.
+Use branch `feat/unreal-linux-slice`. It includes the browser checkpoint and does not require merging either earlier PR. See [HANDOFF.md](HANDOFF.md) for the first native build, playtest and troubleshooting sequence.
 
 From an existing clone, save any local work before switching branches:
 
