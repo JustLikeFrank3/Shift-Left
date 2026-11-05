@@ -6,6 +6,8 @@ This is the native Unreal Engine 5.8 port of **The Leaked Secret**. It contains 
 
 **Current verification (2026-11-04, UE 5.8.0, Ubuntu 26.04, RTX 5060 Ti):** the native module compiles, the bootstrap imports the art and score and saves the map, and a packaged Linux Development build (`build/Linux/ShiftLeft.sh`) launches and renders on Vulkan. Scripted in-engine playtests pass in both the editor's `-game` mode and the packaged build: the full incident (grade S), the wrong route and its recovery, the effort budget and retry, guided versus standard deadlines, paused reading time and the M music toggle. The portable model still passes its 68 GCC checks. See [HANDOFF.md](HANDOFF.md#native-verification-results) for what this does and does not cover. The package is built locally and not published.
 
+**Latest Mac investigation pass (November 5):** the model passes 84 checks, and the final packaged app passes all nine native scenarios, including deliberate repair, blind option sweeps that do not win, prevention that actually blocks a later leak, recovery, budget/retry, difficulty, pause/music, DOC and Quit. The clean native route is now seven effort. See the handoff for the stale first archive caught by the new test and the successful rebuilt archive.
+
 The browser checkpoint remains in the parent project. Its full campaign and live text DOC are separate from this native slice.
 
 ![PATCH and DOC in the original corridor art](ArtSource/preview.png)
@@ -66,15 +68,18 @@ The source preflight checks the original FBX headers, stereo WAV format, native 
 
 ## How play is intended to work
 
-PATCH begins beside the live production leak, with DOC floating nearby. The corridor runs left to right through SOURCE, BUILD, TEST, STAGE and PROD. Walk along the deck; the camera follows PATCH. Walk up to a terminal and press E to investigate or contain the leak. Press F nearby to open **PATCH!** and choose a credential route. Travel left to make structural repairs cheaper.
+PATCH begins beside a live service whose password was copied from a public download. The goal is to stop copied keys working, restore the service and pass a release rehearsal. E reads a terminal's evidence; F compares changes; R runs probes against the current candidate. DOC explains terms and evidence on demand.
 
+The stages now have different jobs. SOURCE chooses how code obtains the key (1 effort); BUILD chooses whether the key travels in the package or is fetched at runtime (2); TEST chooses whether findings warn or block delivery (4). STAGING rehearses the release; PRODUCTION reads the access trail and operates the live service and key issuer. Reading, rehearsals and production operations are free. A clean owning-stage route costs seven effort out of 24.
+
+Approaches replace one another. Encoding a key remains extractable, advisory scanning can allow a leak, and rolling back an application does not revoke its keys. Probe results reveal those consequences. The rehearsal reports all observed outcomes, rather than handing out the next repair instruction.
 | Control | Action |
 | --- | --- |
 | A / D or ← / → | Walk along the corridor |
-| E | Connect to the nearby terminal |
-| F | Open PATCH! at the nearby terminal |
+| E | Read local evidence |
+| F | Compare approaches at this terminal |
 | Q | Ask DOC a plain-language question |
-| R | Validate the incident |
+| R | Run the release rehearsal |
 | M | Toggle the original score |
 | 1 / 2 / 3 (4 in help) or mouse | Choose an operation in a panel |
 | Escape / H | Close a panel or open help (H also works in Play-in-Editor, where Escape stops play) |
@@ -103,7 +108,7 @@ The archive goes to `unreal/build/Linux/` by default; launch it with `build/Linu
 SL_GAME="$PWD/build/Linux/ShiftLeft.sh" ./scripts/playtest-linux.sh -     # packaged build
 ```
 
-On Mac, use `./scripts/playtest-mac.sh /path/to/UE_5.8` (includes the offline `doc` test), or pass `doc-live` explicitly for a real ElevenLabs question. Use `SL_GAME=/absolute/path/ShiftLeft.app/Contents/MacOS/ShiftLeft ./scripts/playtest-mac.sh -` to test the package. The Mac runner stops on a process crash and keeps editor/package logs separate. Pass `layout` to walk both corridor endpoints and check rendered station signs. Set `SL_RES_X=1600 SL_RES_Y=1000` to check the HUD at a 16:10 aspect ratio; the defaults remain 1600×900.
+On Mac, use `./scripts/playtest-mac.sh /path/to/UE_5.8` (includes the offline `doc` test), or pass `doc-live` explicitly for a real ElevenLabs question. Use `SL_GAME=/absolute/path/ShiftLeft.app/Contents/MacOS/ShiftLeft ./scripts/playtest-mac.sh -` to test the package. The Mac runner stops on a process crash and keeps editor/package logs separate. The default suite includes `decisions`, which presses every approach in listed order and must fail to solve the incident, and `prevention`, which verifies that a blocking check really stops a subsequent key-packaging mistake. Pass `layout` to walk both corridor endpoints and check rendered station signs. Set `SL_RES_X=1600 SL_RES_Y=1000` to check the HUD at a 16:10 aspect ratio; the defaults remain 1600×900.
 
 Each baseline scenario (`complete`, `wrong`, `budget`, `guided`, `pause`, `quit`) starts the game with `-SLAutoplay=<scenario>`, sends key events through Slate into the normal input bindings, saves in-engine screenshots and logs PASS/FAIL checks to `playtest/<scenario>.log`. A window opens; do not type into it while it runs. It does not replace a human playtest: it does not use the OS keyboard, the mouse, or listen to the audio.
 

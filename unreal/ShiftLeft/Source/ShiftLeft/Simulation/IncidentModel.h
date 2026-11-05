@@ -19,7 +19,10 @@ enum class Action
     RouteToRuntime,
     RouteIntoArtifact,
     InstallEarlyCheck,
-    Validate
+    Validate,
+    EncodeSourceLiteral,
+    ReportOnlyCheck,
+    RollBackRelease
 };
 
 struct IncidentState
@@ -45,6 +48,8 @@ struct IncidentState
     bool initialCredentialRevoked = false;
     bool replacementExposed = false;
     bool guided = false;
+    bool sourceEncoded = false;
+    bool reportOnlyCheck = false;
 };
 
 inline constexpr int RepairCost(Stage stage)
@@ -74,7 +79,7 @@ inline IncidentState NewIncident(bool guided = false)
 {
     IncidentState state;
     state.guided = guided;
-    state.feedback = "A synthetic service token is public in source history and a shipped artifact. Live use is still possible.";
+    state.feedback = "Someone copied the service key from a public download. Stop their access and prepare a release that keeps the service working.";
     return state;
 }
 
@@ -117,6 +122,28 @@ inline IncidentState Advance(const IncidentState& previous, std::int64_t deltaMs
         state.exposedMilliseconds = std::min(state.exposedMilliseconds, remainingPressure * 1800);
     }
     return Detail::UpdatePressure(state);
+}
+
+// These are observations from probes, not a list of repair commands.
+inline bool ServiceResponding(const IncidentState& state)
+{
+    return !state.initialCredentialRevoked || (state.runtimeBound && state.replacementProvisioned && !state.replacementExposed);
+}
+
+inline bool ReleaseReady(const IncidentState& state)
+{
+    return state.credentialRevoked && state.usageReviewed && state.replacementProvisioned
+        && state.runtimeBound && state.sourceLiteralRemoved && !state.artifactContainsSecret && state.earlyCheck;
+}
+
+inline std::string ReleaseReadout(const IncidentState& state)
+{
+    return std::string("Copied-key request: ") + (state.credentialRevoked ? "REJECTED" : "ACCEPTED")
+        + "\nService request: " + (ServiceResponding(state) ? "200 OK" : "401 - cannot authenticate")
+        + "\nAccess trail: " + (state.usageReviewed ? "reviewed for current exposure" : "current exposure not reviewed")
+        + "\nCode inspection: " + (state.sourceLiteralRemoved ? "reads a key reference" : state.sourceEncoded ? "decodes an embedded key" : "contains an embedded key")
+        + "\nDownload inspection: " + (state.artifactContainsSecret ? "credential bytes found" : "no credential bytes")
+        + "\nFake-key test change: " + (state.earlyCheck ? "release BLOCKED" : state.reportOnlyCheck ? "warning logged; release ALLOWED" : "release ALLOWED");
 }
 
 inline IncidentState Apply(const IncidentState& previous, Action action, Stage stage)
@@ -186,6 +213,7 @@ inline IncidentState Apply(const IncidentState& previous, Action action, Stage s
         else if (spend())
         {
             state.sourceLiteralRemoved = true;
+            state.sourceEncoded = false;
             state.feedback = "Hardcoded source literal removed. This does not revoke a token or remove it from shipped artifacts and history.";
         }
         break;
@@ -210,6 +238,11 @@ inline IncidentState Apply(const IncidentState& previous, Action action, Stage s
             state.feedback = "No replacement exists to inject into the artifact. No change was made.";
         else if (state.replacementExposed)
             state.feedback = "This replacement is already inside a public artifact. Repeating the injection changes nothing.";
+        else if (state.earlyCheck)
+        {
+            if (spend())
+                state.feedback = "The scanner stopped this build: a key was inside the package. The previous package and service were kept; no new key escaped.";
+        }
         else if (spend())
         {
             state.artifactContainsSecret = true;
@@ -228,28 +261,50 @@ inline IncidentState Apply(const IncidentState& previous, Action action, Stage s
         else if (spend())
         {
             state.earlyCheck = true;
+            state.reportOnlyCheck = false;
             state.feedback = "Early secret checks now scan source changes and release artifacts. Existing leaked credentials still need containment and repair.";
         }
         break;
 
+    case Action::EncodeSourceLiteral:
+        if (state.sourceEncoded)
+            state.feedback = "The code already decodes an embedded key. No change made.";
+        else if (spend())
+        {
+            state.sourceEncoded = true;
+            state.sourceLiteralRemoved = false;
+            state.artifactContainsSecret = true;
+            state.feedback = "The key is no longer readable at a glance. A download inspection decodes it back to the same credential.";
+        }
+        break;
+
+    case Action::ReportOnlyCheck:
+        if (state.reportOnlyCheck)
+            state.feedback = "The test already records warnings without stopping a release. No change made.";
+        else if (spend())
+        {
+            state.reportOnlyCheck = true;
+            state.earlyCheck = false;
+            state.feedback = "The fake-key test produced a warning. The release still went through.";
+        }
+        break;
+
+    case Action::RollBackRelease:
+        state.runtimeBound = false;
+        state.artifactContainsSecret = true;
+        state.feedback = state.initialCredentialRevoked
+            ? "The previous version is running again. Its old key receives 401: unauthorized. Public downloads still contain that key."
+            : "The previous version is running again. Requests using the copied key are still accepted; the issuer did not change.";
+        break;
+
     case Action::Validate:
-        if (!state.credentialRevoked)
-            state.feedback = "Validation failed: a leaked token still has access. Deleting copies cannot revoke it.";
-        else if (!state.usageReviewed)
-            state.feedback = "Validation failed: exposure scope is unreviewed. Inspect usage and history, including any replacement leak.";
-        else if (!state.replacementProvisioned || !state.runtimeBound)
-            state.feedback = "Validation failed: the service has no working managed runtime credential.";
-        else if (!state.sourceLiteralRemoved)
-            state.feedback = "Validation failed: source still hardcodes a credential, so another build can repeat the leak.";
-        else if (state.artifactContainsSecret)
-            state.feedback = "Validation failed: the release artifact still embeds a secret.";
-        else if (!state.earlyCheck)
-            state.feedback = "Validation failed: the next source change or artifact can leak again without an early secret check.";
-        else
+        if (ReleaseReady(state))
         {
             state.completed = true;
-            state.feedback = "Validated: leaked tokens revoked, usage scoped, source repaired, runtime credential working, clean artifact, and early checks installed.";
+            state.feedback = "Copied keys are rejected, the service works, and the candidate survives the leak rehearsal. Release verified.";
         }
+        else
+            state.feedback = "Rehearsal did not pass. Read the probe results; the candidate has not been released.";
         break;
     }
 
@@ -262,9 +317,9 @@ inline std::string Grade(const IncidentState& state)
         return "F";
     if (!state.completed)
         return "IN PROGRESS";
-    // Three source-level fixes are par. Emergency containment and replacement
+    // Code, packaging and enforcement at their owning stages cost seven effort. Emergency containment and replacement
     // never consume effort or lower the grade at any station.
-    const int effortPenalty = std::max(0, state.effortSpent - 3) * 2;
+    const int effortPenalty = std::max(0, state.effortSpent - 7) * 2;
     const int timePenalty = static_cast<int>(std::min<std::int64_t>(30, state.exposedMilliseconds / 6000));
     const int score = 100 - effortPenalty - state.mistakes * 15 - timePenalty;
     if (score >= 95) return "S";

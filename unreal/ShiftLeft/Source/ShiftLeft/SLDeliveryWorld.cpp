@@ -186,7 +186,7 @@ void ASLDeliveryWorld::RebuildWorld()
     }
 
     const TCHAR* Names[] = {TEXT("SOURCE"),TEXT("BUILD"),TEXT("TEST"),TEXT("STAGING"),TEXT("PRODUCTION")};
-    const TCHAR* Subtitles[] = {TEXT("PREVENT / 01  -  FIX 1"),TEXT("PACKAGE / 02  -  FIX 2"),TEXT("VERIFY / 03  -  FIX 4"),TEXT("REHEARSE / 04  -  FIX 8"),TEXT("CONTAIN / 05  -  FIX 16")};
+    const TCHAR* Subtitles[] = {TEXT("CODE / 1 EFFORT"),TEXT("PACKAGE / 2 EFFORT"),TEXT("CHECKS / 4 EFFORT"),TEXT("REHEARSE / FREE"),TEXT("LIVE SERVICE / FREE")};
     for (int32 Stage=0; Stage<5; ++Stage)
     {
         const float X = ShiftLeftLayout::StageX(Stage);

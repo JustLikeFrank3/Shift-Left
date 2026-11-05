@@ -194,6 +194,9 @@ void USLDocChat::Message(const FString& Data)
         {
             const auto& S = Mode->GetIncident();
             Snapshot->SetStringField(TEXT("stage"), Mode->GetStationLabel());
+            Snapshot->SetStringField(TEXT("localEvidence"), Mode->GetEvidence());
+            Snapshot->SetStringField(TEXT("rehearsalProbes"), UTF8_TO_TCHAR(ShiftLeft::ReleaseReadout(S).c_str()));
+            Snapshot->SetStringField(TEXT("nativeControlsAndRoles"), TEXT("E reads evidence, F compares approaches, R rehearses. SOURCE changes code (1 effort); BUILD chooses package versus runtime key delivery (2); TEST chooses advisory versus blocking scans (4); STAGING rehearses (free); PRODUCTION reviews access and operates key issuance, disabling and rollback (free). Explain terms and evidence. Give a step-by-step solution only if the player explicitly asks for one."));
             Snapshot->SetStringField(TEXT("feedback"), UTF8_TO_TCHAR(S.feedback.c_str()));
             Snapshot->SetBoolField(TEXT("credentialRevoked"), S.credentialRevoked);
             Snapshot->SetBoolField(TEXT("usageReviewed"), S.usageReviewed);
@@ -267,12 +270,12 @@ FString USLDocChat::LocalAnswer(const FString& Question) const
 {
     const FString Q = Question.ToLower();
     if (Q.Contains(TEXT("delet")) || Q.Contains(TEXT("revok")) || Q.Contains(TEXT("contain")))
-        return TEXT("Deleting a source literal cannot invalidate a credential already copied from history or an artifact. At PRODUCTION, review usage, revoke the exposed credential and provision a replacement. These emergency actions cost no effort.");
+        return TEXT("A service key is a password used by software. Deleting its text from code cannot stop someone using an existing copy. The issuer decides whether a key is accepted. Compare the copied-key and service-request results at PRODUCTION; disabling a key can affect both.");
     if (Q.Contains(TEXT("runtime")) || Q.Contains(TEXT("artifact")) || Q.Contains(TEXT("route")))
         return TEXT("A runtime binding lets the running service resolve a credential from the vault. Putting the value in an artifact ships another extractable copy. If the replacement escapes, revoke it and provision another before retrying the runtime route.");
     if (Q.Contains(TEXT("left")) || Q.Contains(TEXT("cost")) || Q.Contains(TEXT("budget")))
-        return TEXT("SOURCE is on the left, then BUILD, TEST, STAGING and PRODUCTION. Repairs cost 1 / 2 / 4 / 8 / 16 effort at those stages; you have 24. Containment and investigation stay free. Walk left to make structural changes cheaper.");
+        return TEXT("SOURCE edits code (1 effort), BUILD chooses how the key reaches the app (2), and TEST configures checks (4). STAGING rehearses; PRODUCTION operates the live service. Those last two and all reading are free. You have 24 effort; switching approaches spends again. E reads evidence, F compares changes, R rehearses.");
     if (Q.Contains(TEXT("jump"))) return TEXT("This corridor is about investigating and repairing the delivery pipeline. There is no jump action: terminals are reachable on the floor.");
-    if (Q.Contains(TEXT("check")) || Q.Contains(TEXT("scan"))) return TEXT("An early secret check detects future mistakes before an artifact ships. It does not revoke an exposed credential. Install it alongside source repair and safe runtime routing, then validate the release.");
+    if (Q.Contains(TEXT("check")) || Q.Contains(TEXT("scan"))) return TEXT("A scanner can notice a secret without stopping delivery. At TEST, compare what happens when a fake key is submitted: does the release stop, or does it only leave a warning? This is separate from disabling a key that already escaped.");
     return TEXT("This offline reference covers containment/revocation, runtime versus artifact routing, early checks and repair costs. Ask about one of those, or Send to live DOC for a plain-language answer to a broader game question. DOC never changes the incident for you.");
 }

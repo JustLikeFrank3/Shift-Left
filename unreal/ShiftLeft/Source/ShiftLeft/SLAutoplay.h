@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "InputCoreTypes.h"
+#include "Simulation/IncidentModel.h"
 #include "SLAutoplay.generated.h"
 
 class ASLGameMode;
@@ -40,6 +41,7 @@ private:
     void Tap(const FKey& Key, float After = .35f);
     void Hold(const FKey& Key, float Seconds);
     void WalkTo(int32 Station);
+    void Choose(ShiftLeft::Action Action, float After = .5f);
     void Shot(const FString& Name);
     void Log(const FString& Label);
     void Expect(const FString& Label, TFunction<bool(const ASLGameMode&)> Check);

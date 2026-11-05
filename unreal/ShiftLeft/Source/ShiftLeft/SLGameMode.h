@@ -6,7 +6,7 @@
 #include "SLGameMode.generated.h"
 
 UENUM()
-enum class ESLPanel : uint8 { None, Station, Patch, Doc, Help, Complete };
+enum class ESLPanel : uint8 { None, Station, Patch, Doc, Help, Report, Complete };
 
 USTRUCT()
 struct FSLChoice
@@ -16,6 +16,8 @@ struct FSLChoice
     UPROPERTY() FString Detail;
     UPROPERTY() FString State;
     UPROPERTY() bool bEnabled = true;
+    bool bHasAction = false;
+    ShiftLeft::Action ActionId = ShiftLeft::Action::Validate;
 };
 
 /** Presentation adapter. The portable incident model owns every consequence. */
@@ -37,6 +39,7 @@ public:
     ESLPanel GetPanel() const { return Panel; }
     FString GetPanelTitle() const;
     FString GetPanelBody() const;
+    FString GetEvidence() const;
     TArray<FSLChoice> GetChoices() const;
     float GetPatchPulse() const { return PatchPulse; }
     FString GetMusicStatus() const;

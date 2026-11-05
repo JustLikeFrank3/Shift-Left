@@ -38,7 +38,8 @@ bool SameGameplay(const IncidentState& left, const IncidentState& right)
         left.pressure == right.pressure &&
         left.exposedMilliseconds == right.exposedMilliseconds &&
         left.initialCredentialRevoked == right.initialCredentialRevoked &&
-        left.replacementExposed == right.replacementExposed && left.guided == right.guided;
+        left.replacementExposed == right.replacementExposed && left.guided == right.guided && left.sourceEncoded == right.sourceEncoded &&
+        left.reportOnlyCheck == right.reportOnlyCheck;
 }
 
 bool SameState(const IncidentState& left, const IncidentState& right)
@@ -110,7 +111,7 @@ void BlindPoliciesLose()
 
     IncidentState blind = ShiftLeft::NewIncident();
     blind = Do(blind, Action::RemoveSourceLiteral);
-    blind = Do(blind, Action::InstallEarlyCheck);
+    blind = Do(blind, Action::ReportOnlyCheck);
     // This plausible blind policy contains each visible leak, then repeatedly
     // chooses build-time injection as its credential restoration strategy.
     for (int release = 0; release < 4; ++release)
@@ -231,7 +232,6 @@ void WrongRouteRecovery()
     state = Do(state, Action::ProvisionReplacement);
     state = Do(state, Action::RemoveSourceLiteral);
     state = Do(state, Action::RouteToRuntime);
-    state = Do(state, Action::InstallEarlyCheck);
     const IncidentState safe = state;
     state = Do(state, Action::RouteIntoArtifact);
     Expect(state.replacementExposed && !state.credentialRevoked && state.artifactContainsSecret &&
@@ -247,15 +247,16 @@ void WrongRouteRecovery()
     state = Do(state, Action::RevokeCredential);
     Expect(state.credentialRevoked && !state.replacementProvisioned && !state.replacementExposed,
            "free containment revokes the compromised replacement instead of reusing it");
-    Expect(state.sourceLiteralRemoved && state.earlyCheck,
+    Expect(state.sourceLiteralRemoved,
            "containment preserves legitimate prior remediation");
     state = Do(state, Action::ProvisionReplacement);
     state = Do(state, Action::RouteToRuntime);
     state = Do(state, Action::InspectUsage);
+    state = Do(state, Action::InstallEarlyCheck);
     state = Do(state, Action::Validate);
-    Expect(state.completed && state.effortSpent == safe.effortSpent + 2 && state.mistakes == 1,
+    Expect(state.completed && state.effortSpent == safe.effortSpent + 3 && state.mistakes == 1,
            "fresh replacement and safe binding recover affordably from the mistake");
-    Expect(ShiftLeft::Grade(state) != ShiftLeft::Grade(Do(safe, Action::Validate)),
+    Expect(ShiftLeft::Grade(state) != "S",
            "recoverable mistakes still affect the replay grade");
 
     IncidentState exposed = Do(ShiftLeft::NewIncident(), Action::ProvisionReplacement);
@@ -266,6 +267,67 @@ void WrongRouteRecovery()
     Expect(SameState(chunked, ShiftLeft::Advance(exposed, 150000)) &&
                chunked.exposedMilliseconds == 135000,
            "mistake pressure and time share the same deterministic failure instant");
+}
+
+void InvestigationDecisions()
+{
+    IncidentState state = Do(ShiftLeft::NewIncident(), Action::RollBackRelease);
+    Expect(!state.credentialRevoked && ShiftLeft::ServiceResponding(state),
+           "rolling back the app cannot revoke a key at its issuer");
+    state = Do(state, Action::RevokeCredential);
+    Expect(!ShiftLeft::ServiceResponding(state), "revoking the service's old key interrupts its requests");
+    state = Do(state, Action::ProvisionReplacement);
+    Expect(!ShiftLeft::ServiceResponding(state), "issuing a key alone does not change the service configuration");
+    state = Do(state, Action::InspectUsage);
+    state = Do(state, Action::RemoveSourceLiteral, Stage::Source);
+    state = Do(state, Action::RouteToRuntime, Stage::Build);
+    state = Do(state, Action::InstallEarlyCheck, Stage::Test);
+    Expect(ShiftLeft::ReleaseReady(state) && state.effortSpent == 7 && ShiftLeft::ServiceResponding(state),
+           "stage-specific investigation can produce a working seven-effort candidate");
+    const IncidentState ready = state;
+    const IncidentState blocked = Do(ready, Action::RouteIntoArtifact, Stage::Build);
+    Expect(blocked.credentialRevoked && !blocked.replacementExposed && !blocked.artifactContainsSecret
+           && blocked.runtimeBound && blocked.usageReviewed && blocked.mistakes == 0,
+           "a blocking check prevents packaging a key and preserves the last safe candidate");
+    Expect(blocked.effortSpent == ready.effortSpent + 2 && ShiftLeft::ReleaseReady(blocked),
+           "a prevented mistake spends work but creates no incident and preserves release readiness");
+    IncidentState noBudget = ready;
+    noBudget.budget = noBudget.effortSpent;
+    Expect(SameGameplay(noBudget, Do(noBudget, Action::RouteIntoArtifact, Stage::Build)),
+           "unaffordable attempted packaging is atomic even with a blocking check");
+    state = Do(state, Action::EncodeSourceLiteral);
+    Expect(!state.sourceLiteralRemoved && state.sourceEncoded && state.artifactContainsSecret,
+           "encoding replaces a source repair and remains extractable from the download");
+    Expect(!Do(state, Action::Validate).completed, "encoded secrets fail the rehearsal");
+    state = Do(ready, Action::ReportOnlyCheck, Stage::Test);
+    Expect(!state.earlyCheck && state.reportOnlyCheck && !Do(state, Action::Validate).completed,
+           "switching a blocking check to advisory mode undoes prevention");
+    Expect(ShiftLeft::ReleaseReadout(state).find("warning logged; release ALLOWED") != std::string::npos,
+           "probe results distinguish detection from enforcement");
+    state.budget = state.effortSpent;
+    Expect(SameGameplay(state, Do(state, Action::InstallEarlyCheck, Stage::Test)),
+           "an unaffordable reversal preserves the current test policy");
+    Expect(!Do(Do(ready, Action::RollBackRelease), Action::Validate).completed,
+           "rolling back after repair restores the old package and fails the next rehearsal");
+
+    for (bool reverse : {false, true})
+    {
+        IncidentState blind = ShiftLeft::NewIncident(true);
+        blind = Do(blind, Action::InspectUsage);
+        blind = Do(blind, Action::RevokeCredential);
+        blind = Do(blind, Action::ProvisionReplacement);
+        const std::vector<std::vector<Action>> options = {
+            {Action::EncodeSourceLiteral, Action::RemoveSourceLiteral},
+            {Action::RouteToRuntime, Action::RouteIntoArtifact},
+            {Action::ReportOnlyCheck, Action::InstallEarlyCheck}};
+        for (int stage = 0; stage < 3; ++stage)
+            for (int index = 0; index < 2; ++index)
+                blind = Do(blind, options[stage][reverse ? 1-index : index], static_cast<Stage>(stage));
+        Expect(!Do(blind, Action::Validate).completed,
+               "sweeping every approach in either list order does not solve the incident");
+    }
+    state = Do(ready, Action::Validate);
+    Expect(state.completed && ShiftLeft::Grade(state) == "S", "the deliberate seven-effort route earns S");
 }
 
 void ImmutabilityAndReplay()
@@ -322,6 +384,7 @@ int main()
     ExposureClock();
     WrongRouteRecovery();
     ImmutabilityAndReplay();
+    InvestigationDecisions();
     std::cout << "Incident model: " << assertions << " checks passed\n";
     return EXIT_SUCCESS;
 }

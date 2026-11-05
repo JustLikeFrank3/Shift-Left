@@ -31,6 +31,7 @@ namespace
         case ESLPanel::Patch: return TEXT("Patch");
         case ESLPanel::Doc: return TEXT("Doc");
         case ESLPanel::Help: return TEXT("Help");
+        case ESLPanel::Report: return TEXT("Report");
         case ESLPanel::Complete: return TEXT("Complete");
         }
         return TEXT("?");
@@ -88,6 +89,29 @@ void ASLAutoplay::Hold(const FKey& Key, float Seconds)
     Steps.Add([this, Key](float) { SendKey(Key, true); return true; });
     Wait(Seconds);
     Steps.Add([this, Key](float) { SendKey(Key, false); return true; });
+}
+
+void ASLAutoplay::Choose(ShiftLeft::Action Action, float After)
+{
+    // Resolve the visible action, then use its real number key. Tests must not
+    // equate a correct decision with the first item in a presentation list.
+    const auto Key = MakeShared<FKey>(EKeys::Invalid);
+    Steps.Add([this, Action, Key](float)
+    {
+        const auto Choices = Mode()->GetChoices();
+        const FKey Keys[] = {EKeys::One,EKeys::Two,EKeys::Three,EKeys::Four};
+        for (int32 Index=0; Index<Choices.Num() && Index<4; ++Index)
+            if (Choices[Index].bHasAction && Choices[Index].ActionId == Action)
+            {
+                *Key = Keys[Index]; SendKey(*Key, true); return true;
+            }
+        ++Failures;
+        UE_LOG(LogSLAutoplay, Error, TEXT("FAIL requested decision is absent from the visible panel | %s"), *Describe());
+        return true;
+    });
+    Wait(.06f);
+    Steps.Add([this, Key](float) { if (Key->IsValid()) SendKey(*Key, false); return true; });
+    Wait(After);
 }
 
 void ASLAutoplay::WalkTo(int32 Station)
@@ -166,17 +190,15 @@ void ASLAutoplay::Build()
 
     const auto Contain = [this]()
     {
-        Tap(EKeys::E);
-        Tap(EKeys::One); Tap(EKeys::Two); Tap(EKeys::Three);
+        Tap(EKeys::E); // Reading the actual live trace records its exposure scope.
+        Tap(EKeys::F); Choose(ShiftLeft::Action::RevokeCredential);
+        Tap(EKeys::F); Choose(ShiftLeft::Action::ProvisionReplacement);
     };
     const auto SourceRepairs = [this]()
     {
-        WalkTo(0);
-        Tap(EKeys::E);
-        Tap(EKeys::Two); Tap(EKeys::Three);
-        Tap(EKeys::E);
-        Tap(EKeys::F);
-        Tap(EKeys::One, 1.4f);
+        WalkTo(0); Tap(EKeys::E); Tap(EKeys::F); Choose(ShiftLeft::Action::RemoveSourceLiteral);
+        WalkTo(1); Tap(EKeys::E); Tap(EKeys::F); Choose(ShiftLeft::Action::RouteToRuntime);
+        WalkTo(2); Tap(EKeys::E); Tap(EKeys::F); Choose(ShiftLeft::Action::InstallEarlyCheck);
     };
 
     if (Scenario == TEXT("layout"))
@@ -257,71 +279,104 @@ void ASLAutoplay::Build()
         Expect(TEXT("floor collision keeps PATCH grounded"), [this](const ASLGameMode&) { const float Z = Player(this) ? Player(this)->GetActorLocation().Z : -1.f; return Z > 90.f && Z < 115.f; });
         WalkTo(4);
         Tap(EKeys::E);
-        Shot(TEXT("production-terminal"));
-        Tap(EKeys::One); Tap(EKeys::Two); Tap(EKeys::Three);
-        Shot(TEXT("production-contained"));
-        Expect(TEXT("containment is free"), [](const ASLGameMode& M) { const auto& S = M.GetIncident(); return S.credentialRevoked && S.usageReviewed && S.replacementProvisioned && S.effortSpent == 0; });
-        Tap(EKeys::E);
-        Steps.Add([this](float) { SendKey(EKeys::A, true); return true; });
-        Wait(4.f);
-        Shot(TEXT("walk-left-midgrid"));
-        Steps.Add([this](float) { SendKey(EKeys::A, false); return true; });
-        WalkTo(0);
-        Shot(TEXT("source-arrival"));
-        Tap(EKeys::E);
-        Tap(EKeys::Two); Tap(EKeys::Three);
-        Shot(TEXT("source-repaired"));
-        Tap(EKeys::E);
-        Tap(EKeys::F, .5f);
-        Shot(TEXT("patch-panel"));
-        Steps.Add([this](float) { SendKey(EKeys::One, true); return true; });
-        Wait(.06f);
-        Steps.Add([this](float) { SendKey(EKeys::One, false); return true; });
-        Wait(.15f);
-        Shot(TEXT("patch-feedback"));
-        Wait(.6f);
-        Expect(TEXT("source repairs cost 3"), [](const ASLGameMode& M) { const auto& S = M.GetIncident(); return S.sourceLiteralRemoved && S.earlyCheck && S.runtimeBound && S.effortSpent == 3; });
-        Tap(EKeys::R, 1.f);
+        Shot(TEXT("production-evidence"));
+        Expect(TEXT("production presents observed requests, not a numbered repair checklist"), [](const ASLGameMode& M)
+        {
+            return M.GetPanelBody().Contains(TEXT("Copied-key request: ACCEPTED")) && M.GetChoices().Num() == 2;
+        });
+        Tap(EKeys::F); Choose(ShiftLeft::Action::RevokeCredential);
+        Expect(TEXT("containment stops copied access but interrupts the old service"), [](const ASLGameMode& M)
+        {
+            return M.GetIncident().credentialRevoked && !ShiftLeft::ServiceResponding(M.GetIncident());
+        });
+        Shot(TEXT("service-interrupted"));
+        Tap(EKeys::F); Choose(ShiftLeft::Action::ProvisionReplacement);
+        Expect(TEXT("operations stay free"), [](const ASLGameMode& M) { return M.GetIncident().effortSpent == 0; });
+        WalkTo(0); Tap(EKeys::E); Shot(TEXT("source-evidence"));
+        Tap(EKeys::F); Shot(TEXT("source-decision")); Choose(ShiftLeft::Action::RemoveSourceLiteral);
+        WalkTo(1); Tap(EKeys::E); Shot(TEXT("build-evidence"));
+        Tap(EKeys::F); Shot(TEXT("build-decision")); Choose(ShiftLeft::Action::RouteToRuntime);
+        WalkTo(2); Tap(EKeys::E); Shot(TEXT("test-evidence"));
+        Tap(EKeys::F); Shot(TEXT("test-decision")); Choose(ShiftLeft::Action::InstallEarlyCheck);
+        Expect(TEXT("three owning-stage changes cost seven and restore service"), [](const ASLGameMode& M)
+        {
+            return M.GetIncident().effortSpent == 7 && ShiftLeft::ServiceResponding(M.GetIncident());
+        });
+        WalkTo(3); Tap(EKeys::E); Shot(TEXT("staging-evidence"));
+        Tap(EKeys::F); Choose(ShiftLeft::Action::Validate);
         Shot(TEXT("complete"));
-        Expect(TEXT("validated release with mistakes 0"), [](const ASLGameMode& M) { const auto& S = M.GetIncident(); return S.completed && S.mistakes == 0 && M.GetPanel() == ESLPanel::Complete; });
+        Expect(TEXT("investigated release validates with no mistakes"), [](const ASLGameMode& M)
+        {
+            return M.GetIncident().completed && M.GetIncident().mistakes == 0 && M.GetPanel() == ESLPanel::Complete;
+        });
     }
     else if (Scenario == TEXT("wrong"))
     {
-        Tap(EKeys::One, 1.f);
-        Contain();
-        Tap(EKeys::E);
-        Tap(EKeys::F);
-        Tap(EKeys::Two, .15f);
+        Tap(EKeys::One, 1.f); Contain();
+        WalkTo(1); Tap(EKeys::F); Choose(ShiftLeft::Action::RouteIntoArtifact);
         Shot(TEXT("artifact-route"));
-        Expect(TEXT("artifact route re-exposes the replacement"), [](const ASLGameMode& M) { const auto& S = M.GetIncident(); return S.replacementExposed && !S.credentialRevoked && S.mistakes == 1 && S.effortSpent == 16 && S.pressure >= 25; });
-        Wait(2.f);
-        Expect(TEXT("exposure clock runs again"), [](const ASLGameMode& M) { return M.GetIncident().exposedMilliseconds > 1500; });
-        Tap(EKeys::E);
-        Tap(EKeys::One); Tap(EKeys::Two); Tap(EKeys::Three);
-        Shot(TEXT("recovered"));
-        Expect(TEXT("revoke + fresh replacement recovers"), [](const ASLGameMode& M) { const auto& S = M.GetIncident(); return S.credentialRevoked && S.replacementProvisioned && !S.replacementExposed && S.usageReviewed; });
-        Tap(EKeys::E);
-        SourceRepairs();
-        Tap(EKeys::R, 1.f);
-        Shot(TEXT("complete"));
-        Expect(TEXT("recovered run validates with one mistake"), [](const ASLGameMode& M) { const auto& S = M.GetIncident(); return S.completed && S.mistakes == 1 && S.effortSpent == 19; });
+        Expect(TEXT("artifact route exposes replacement and invalidates the trace"), [](const ASLGameMode& M)
+        {
+            const auto& S=M.GetIncident();
+            return S.replacementExposed && !S.credentialRevoked && !S.usageReviewed && S.mistakes==1 && S.effortSpent==2;
+        });
+        Tap(EKeys::R); Shot(TEXT("probe-report"));
+        Expect(TEXT("rehearsal reports multiple observations without completing"), [](const ASLGameMode& M)
+        {
+            return M.GetPanel()==ESLPanel::Report && !M.GetIncident().completed
+                && M.GetPanelBody().Contains(TEXT("Copied-key request: ACCEPTED"))
+                && M.GetPanelBody().Contains(TEXT("Fake-key test change: release ALLOWED"));
+        });
+        Tap(EKeys::Escape); WalkTo(4); Contain(); SourceRepairs();
+        Tap(EKeys::R); Shot(TEXT("recovered"));
+        Expect(TEXT("fresh key and revised decisions recover within budget"), [](const ASLGameMode& M)
+        { return M.GetIncident().completed && M.GetIncident().mistakes==1 && M.GetIncident().effortSpent==9; });
+    }
+    else if (Scenario == TEXT("decisions"))
+    {
+        Tap(EKeys::One); Contain();
+        for (int32 Stage=0; Stage<3; ++Stage)
+        {
+            WalkTo(Stage);
+            Tap(EKeys::F); Tap(EKeys::One);
+            Tap(EKeys::F); Tap(EKeys::Two);
+        }
+        Tap(EKeys::R); Shot(TEXT("blind-sweep-results"));
+        Expect(TEXT("pressing every approach in listed order cannot win"), [](const ASLGameMode& M)
+        {
+            const auto& S=M.GetIncident();
+            return !S.completed && S.replacementExposed && S.effortSpent==14 && M.GetPanel()==ESLPanel::Report;
+        });
+    }
+    else if (Scenario == TEXT("prevention"))
+    {
+        Tap(EKeys::One); Contain(); SourceRepairs();
+        WalkTo(1); Tap(EKeys::F); Choose(ShiftLeft::Action::RouteIntoArtifact);
+        Shot(TEXT("check-prevents-leak"));
+        Expect(TEXT("blocking check protects the previous package from a later mistake"), [](const ASLGameMode& M)
+        {
+            const auto& S=M.GetIncident();
+            return S.credentialRevoked && !S.replacementExposed && !S.artifactContainsSecret
+                && S.runtimeBound && S.mistakes==0 && S.effortSpent==9;
+        });
+        Tap(EKeys::R);
+        Expect(TEXT("the protected candidate remains releasable"), [](const ASLGameMode& M) { return M.GetIncident().completed; });
     }
     else if (Scenario == TEXT("budget"))
     {
-        Tap(EKeys::One, 1.f);
-        Contain();
-        Tap(EKeys::E);
-        Tap(EKeys::F); Tap(EKeys::One, 1.4f);
-        WalkTo(3);
-        Tap(EKeys::E);
-        Tap(EKeys::Two); Tap(EKeys::Three, .6f);
+        Tap(EKeys::One); Contain(); WalkTo(2);
+        for (int32 Attempt=0; Attempt<3; ++Attempt)
+        {
+            Tap(EKeys::F); Choose(ShiftLeft::Action::InstallEarlyCheck);
+            Tap(EKeys::F); Choose(ShiftLeft::Action::ReportOnlyCheck);
+        }
+        Tap(EKeys::F); Choose(ShiftLeft::Action::InstallEarlyCheck);
         Shot(TEXT("budget-exhausted"));
-        Expect(TEXT("unaffordable repair changes nothing"), [](const ASLGameMode& M) { const auto& S = M.GetIncident(); return S.effortSpent == 24 && S.sourceLiteralRemoved && !S.earlyCheck && !S.completed; });
-        Tap(EKeys::E);
-        Tap(EKeys::Escape, .5f);
-        Tap(EKeys::Two, 1.f);
-        Shot(TEXT("retry"));
-        Expect(TEXT("retry restores budget and position"), [this](const ASLGameMode& M) { const auto& S = M.GetIncident(); return S.effortSpent == 0 && !S.credentialRevoked && M.GetPanel() == ESLPanel::None && Player(this) && FMath::Abs(Player(this)->GetActorLocation().X + 2220.f) < 60.f; });
+        Expect(TEXT("reversing decisions spends effort and unaffordable changes are atomic"), [](const ASLGameMode& M)
+        { const auto& S=M.GetIncident(); return S.effortSpent==24 && !S.earlyCheck && S.reportOnlyCheck && !S.completed; });
+        Tap(EKeys::Escape); Tap(EKeys::Two);
+        Expect(TEXT("retry restores budget and position"), [this](const ASLGameMode& M)
+        { return M.GetIncident().effortSpent==0 && !M.GetIncident().credentialRevoked && M.GetPanel()==ESLPanel::None && FMath::Abs(Player(this)->GetActorLocation().X+2220.f)<60.f; });
     }
     else if (Scenario == TEXT("guided"))
     {

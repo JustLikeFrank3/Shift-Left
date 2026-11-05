@@ -16,8 +16,8 @@ import tempfile
 
 root = Path(sys.argv[1])
 engine = Path(sys.argv[2])
-scenarios = sys.argv[3:] or ['complete', 'wrong', 'budget', 'guided', 'pause', 'doc', 'quit']
-if any(s not in ('complete', 'wrong', 'budget', 'guided', 'pause', 'doc', 'doc-live', 'layout', 'quit') for s in scenarios):
+scenarios = sys.argv[3:] or ['complete', 'wrong', 'budget', 'guided', 'pause', 'doc', 'decisions', 'prevention', 'quit']
+if any(s not in ('complete', 'wrong', 'budget', 'guided', 'pause', 'doc', 'doc-live', 'layout', 'decisions', 'prevention', 'quit') for s in scenarios):
     raise SystemExit('Unknown playtest scenario')
 game = os.environ.get('SL_GAME')
 command = [game] if game else [str(engine / 'Engine/Binaries/Mac/UnrealEditor.app/Contents/MacOS/UnrealEditor'), str(root / 'ShiftLeft/ShiftLeft.uproject'), '/Game/Maps/DeliveryGrid', '-game']

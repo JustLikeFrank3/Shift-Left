@@ -147,3 +147,14 @@ The corridor and controls must agree with the player's screen: SOURCE → BUILD 
 The flat investigation corridor has no jump action. Jumping had no obstacle, reward or incident consequence; adding arbitrary platforming would dilute the investigation. Reintroduce it only with a deliberate traversal mechanic worth testing.
 
 DOC again accepts plain-language typed questions in the native game, using the existing public text-only ElevenLabs agent. The question, recent discussion and synthetic incident state are sent only on submission. DOC remains advisory and cannot apply game actions. A separate offline reference and an explicitly labeled connection-failure fallback keep investigation playable without the service. Chat pauses movement and incident pressure, typing must not trigger gameplay shortcuts, and Escape cancels pending work. Native verification and connection limits are recorded in the Mac handoff.
+
+
+## Native investigation redesign — November 5
+
+The user found the slice simultaneously confusing to understand and trivial to solve by pressing every option in order. The native design now separates a clear goal from the solution: copied keys must fail, the service must work, and a release must survive a leak rehearsal. E reads evidence, F chooses a change, and R runs probes. DOC remains optional.
+
+Each stage has its own role and evidence instead of repeating a generic repair menu. SOURCE chooses embedded/encoded code versus external configuration; BUILD chooses packaging versus runtime key delivery; TEST chooses advisory versus blocking findings; STAGING rehearses; PRODUCTION operates the live service and issuer. Choices are mutually exclusive within each repair area and consume effort when changed. They do not accumulate as checklist completions. Revocation has an observable availability consequence, and application rollback does not revoke a copied key.
+
+The accessible goal and glossary stay visible; rehearsal failures report observed requests and scans, without listing repair commands in prerequisite order. Equal visual treatment avoids labeling an approach as correct before its consequences are observed. No random option shuffle is used as a substitute for decision-making.
+
+This supersedes the native generic 'repair anything at any station' menu. The playable route assigns code, package and enforcement changes to their owning stages for 1, 2 and 4 effort; live operations and rehearsal remain free. The portable model retains arbitrary-stage cost support for legacy tests and future interventions, but the current UI exposes distinct station jobs. Seven effort is the native clean-route par. The browser campaign and previous platform verification remain separate.

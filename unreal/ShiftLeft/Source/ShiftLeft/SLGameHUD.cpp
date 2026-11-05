@@ -146,8 +146,8 @@ void ASLGameHUD::DrawHUD()
     {
         const bool bNearby = Mode->GetNearbyStationIndex() >= 0;
         const FString Prompt = bNearby
-            ? FString::Printf(TEXT("E  CONNECT TO %s     F  PATCH!"), *Mode->GetStationLabel())
-            : TEXT("A / D  MOVE THROUGH THE DELIVERY PIPELINE");
+            ? FString::Printf(TEXT("E  READ %s     F  CHOOSE A CHANGE"), *Mode->GetStationLabel())
+            : TEXT("A / D  WALK TO A TERMINAL     Q  ASK DOC");
         const float Width = FMath::Max(Measure(Prompt, 20.f) + 64.f, 430.f);
         Box(800.f - Width * .5f, 654.f, Width, 44.f, Ink);
         Rule(800.f - Width * .5f, 654.f, Width, Teal, 2.f);
@@ -175,11 +175,13 @@ void ASLGameHUD::DrawStatus(const ASLGameMode& Mode)
     Text(TEXT("SHIFT LEFT"), 44.f, Top + 10.f, 21.f, White);
     Text(State.guided ? TEXT("THE LEAKED SECRET / GUIDED") : TEXT("THE LEAKED SECRET / STANDARD"),
          44.f, Top + 37.f, 12.f, Teal);
-    const FString LiveState = State.completed ? TEXT("RELEASE VALIDATED")
-        : State.credentialRevoked ? TEXT("EXPOSED CREDENTIAL REVOKED") : TEXT("PRODUCTION CREDENTIAL EXPOSED");
+    const FString LiveState = State.completed ? TEXT("RELEASE VERIFIED")
+        : !State.credentialRevoked ? TEXT("COPIED KEY STILL WORKS")
+        : !ShiftLeft::ServiceResponding(State) ? TEXT("ACCESS STOPPED / SERVICE INTERRUPTED") : TEXT("ACCESS STOPPED / SERVICE RESPONDING");
     Text(LiveState, 365.f, Top + 10.f, 17.f,
          State.credentialRevoked || State.completed ? Teal : Coral);
-    Text(Mode.GetMusicStatus(), 365.f, Top + 37.f, 12.f, Muted);
+    Text(TEXT("Goal: stop stolen access. Keep the service working. Pass the leak rehearsal."), 365.f, Top + 37.f, 12.f, Muted);
+    Text(Mode.GetMusicStatus(), 1000.f, Top + 37.f, 12.f, Muted);
     const int32 Remaining = FMath::Max(State.budget - State.effortSpent, 0);
     Text(FString::Printf(TEXT("REPAIR BUDGET  %d / %d"), Remaining, State.budget),
          1000.f, Top + 10.f, 17.f, White);
@@ -195,8 +197,7 @@ void ASLGameHUD::DrawStatus(const ASLGameMode& Mode)
 void ASLGameHUD::DrawPipeline(const ASLGameMode& Mode)
 {
     static const TCHAR* Names[] = {TEXT("SOURCE"), TEXT("BUILD"), TEXT("TEST"), TEXT("STAGING"), TEXT("PRODUCTION")};
-    static const int32 Costs[] = {1, 2, 4, 8, 16};
-    const ShiftLeft::IncidentState& State = Mode.GetIncident();
+    static const TCHAR* Roles[] = {TEXT("CODE / 1 EFFORT"), TEXT("PACKAGE / 2 EFFORT"), TEXT("CHECKS / 4 EFFORT"), TEXT("REHEARSE / FREE"), TEXT("LIVE OPS / FREE")};
     const int32 Current = FMath::Clamp(Mode.GetCurrentStageIndex(), 0, 4);
 
     Box(28.f, 775.f, 1544.f, 101.f, Ink);
@@ -207,28 +208,21 @@ void ASLGameHUD::DrawPipeline(const ASLGameMode& Mode)
     {
         const float X = 292.f + Index * 207.f;
         const bool bHere = Index == Current;
-        const bool bReady = Index == 0 ? State.sourceLiteralRemoved
-            : Index == 1 ? State.runtimeBound
-            : Index == 2 ? State.earlyCheck
-            : Index == 3 ? State.completed : State.credentialRevoked;
         Box(X, 801.f, 195.f, 50.f, bHere ? FLinearColor(.07f, .19f, .23f, 1.f) : Surface);
         Rule(X, 801.f, 195.f, bHere ? Teal : Hairline, bHere ? 3.f : 1.f);
         Text(Names[Index], X + 12.f, 811.f, 15.f, bHere ? White : Muted);
-        Text(FString::Printf(TEXT("FIX %d"), Costs[Index]), X + 12.f, 832.f, 13.f, Muted);
+        Text(Roles[Index], X + 12.f, 832.f, 12.f, Muted);
         if (bHere)
         {
             Text(TEXT("PATCH"), X + 123.f, 832.f, 13.f, Teal);
         }
-        else if (bReady)
-        {
-            Text(TEXT("SET"), X + 147.f, 832.f, 13.f, Teal);
-        }
+
     }
     Text(FString::Printf(TEXT("A / LEFT: %s"), Current > 0 ? Names[Current-1] : TEXT("END")),
          48.f, 814.f, 13.f, White);
     Text(FString::Printf(TEXT("D / RIGHT: %s"), Current < 4 ? Names[Current+1] : TEXT("END")),
          48.f, 836.f, 13.f, White);
-    Text(TEXT("E  CONNECT     F  PATCH!     Q  DOC     R  VALIDATE     ESC / H  HELP"),
+    Text(TEXT("E  READ     F  CHANGE     Q  DOC     R  REHEARSE     ESC / H  HELP"),
          48.f, 859.f, 13.f, Muted);
     Text(TEXT("Choices: number keys or click"), 1316.f, 859.f, 13.f, Muted);
 }
@@ -256,7 +250,7 @@ void ASLGameHUD::DrawPanel(ASLGameMode& Mode)
     const bool bComplete = Mode.GetPanel() == ESLPanel::Complete;
     const FString Eyebrow = bDoc ? TEXT("DOC / LOCAL REFERENCE / OFFLINE")
         : bComplete ? TEXT("PATCH / INCIDENT REVIEW")
-        : Mode.GetPanel() == ESLPanel::Patch ? TEXT("PATCH! / DELIVERY DECISION")
+        : Mode.GetPanel() == ESLPanel::Patch ? TEXT("PATCH / COMPARE APPROACHES")
         : Mode.GetPanel() == ESLPanel::Help ? TEXT("PATCH + DOC / FIELD GUIDE")
         : TEXT("PATCH / STATION CONNECTION");
     Text(Eyebrow, X + 40.f, Y + 25.f, 14.f, Teal);
@@ -302,8 +296,8 @@ void ASLGameHUD::DrawPanel(ASLGameMode& Mode)
     }
     Rule(X + 40.f, Y + Height - 46.f, Width - 80.f, Hairline);
     Text(TEXT("INCIDENT CLOCK PAUSED WHILE READING"), X + 40.f, Y + Height - 29.f, 13.f, Teal);
-    const FString Footer = bCompact ? TEXT("1 - 4  SELECT     ESC  RETURN TO THE GRID")
-                                    : TEXT("1 / 2 / 3  SELECT     ESC  RETURN TO THE GRID");
+    const FString Footer = Count == 1 ? TEXT("1  SELECT     ESC  RETURN TO THE GRID")
+        : FString::Printf(TEXT("1 - %d  SELECT     ESC  RETURN TO THE GRID"), Count);
     Text(Footer, X + Width - 40.f - Measure(Footer, 13.f), Y + Height - 29.f, 13.f, Muted);
 }
 
