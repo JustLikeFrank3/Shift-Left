@@ -138,11 +138,11 @@ void ASLGameHUD::DrawHUD()
 
     DrawStatus(*Mode);
     DrawPipeline(*Mode);
-    if (Mode->IsPanelOpen())
+    if (Mode->IsPanelOpen() && Mode->GetPanel() != ESLPanel::Doc)
     {
         DrawPanel(*Mode);
     }
-    else
+    else if (!Mode->IsPanelOpen())
     {
         const bool bNearby = Mode->GetNearbyStationIndex() >= 0;
         const FString Prompt = bNearby
@@ -228,7 +228,7 @@ void ASLGameHUD::DrawPipeline(const ASLGameMode& Mode)
             Text(TEXT("SET"), X + 147.f, 832.f, 13.f, Teal);
         }
     }
-    Text(TEXT("A / D  MOVE     SPACE  JUMP"), 48.f, 817.f, 14.f, White);
+    Text(TEXT("A / D  MOVE"), 48.f, 817.f, 14.f, White);
     Text(TEXT("E  CONNECT     F  PATCH!     Q  DOC     R  VALIDATE     ESC / H  HELP"),
          48.f, 859.f, 13.f, Muted);
     Text(TEXT("Choices: number keys or click"), 1316.f, 859.f, 13.f, Muted);

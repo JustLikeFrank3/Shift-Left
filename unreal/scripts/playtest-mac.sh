@@ -16,8 +16,8 @@ import tempfile
 
 root = Path(sys.argv[1])
 engine = Path(sys.argv[2])
-scenarios = sys.argv[3:] or ['complete', 'wrong', 'budget', 'guided', 'pause', 'quit']
-if any(s not in ('complete', 'wrong', 'budget', 'guided', 'pause', 'quit') for s in scenarios):
+scenarios = sys.argv[3:] or ['complete', 'wrong', 'budget', 'guided', 'pause', 'doc', 'quit']
+if any(s not in ('complete', 'wrong', 'budget', 'guided', 'pause', 'doc', 'doc-live', 'quit') for s in scenarios):
     raise SystemExit('Unknown playtest scenario')
 game = os.environ.get('SL_GAME')
 command = [game] if game else [str(engine / 'Engine/Binaries/Mac/UnrealEditor.app/Contents/MacOS/UnrealEditor'), str(root / 'ShiftLeft/ShiftLeft.uproject'), '/Game/Maps/DeliveryGrid', '-game']
@@ -44,6 +44,9 @@ with tempfile.TemporaryDirectory(prefix='shift-left-playtest-') as backup:
             for line in content.splitlines():
                 if 'LogSLAutoplay:' in line and ('FAIL' in line or 'Error:' in line):
                     print(line, flush=True)
+            if code < 0:
+                print('Stopping the suite after a process crash; inspect the macOS crash report before launching more scenarios.', flush=True)
+                break
     finally:
         shutil.rmtree(config)
         shutil.copytree(Path(backup) / 'Config', config)

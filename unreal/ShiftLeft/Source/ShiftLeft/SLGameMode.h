@@ -41,6 +41,7 @@ public:
     float GetPatchPulse() const { return PatchPulse; }
     FString GetMusicStatus() const;
     bool IsMusicPlaying() const;
+    class USLDocChat* GetDocChat() const { return DocChat; }
 
     void Interact();
     void OpenPatch();
@@ -59,6 +60,7 @@ private:
     double MillisecondRemainder = 0.0;
     float PatchPulse = 0.f;
     UPROPERTY() class UAudioComponent* Score = nullptr;
+    UPROPERTY() class USLDocChat* DocChat = nullptr;
     bool bMusicEnabled = true;
     bool bHasEnteredGrid = false;
     void OpenPanel(ESLPanel NewPanel);

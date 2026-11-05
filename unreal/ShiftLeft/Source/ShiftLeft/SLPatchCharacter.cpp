@@ -1,4 +1,5 @@
 #include "SLPatchCharacter.h"
+#include "DeliveryLayout.h"
 #include "SLGameMode.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -160,7 +161,7 @@ ASLPatchCharacter::ASLPatchCharacter()
 void ASLPatchCharacter::BeginPlay()
 {
     Super::BeginPlay();
-    SetActorLocation(FVector(2220.f,0.f,120.f),false,nullptr,ETeleportType::TeleportPhysics);
+    SetActorLocation(FVector(ShiftLeftLayout::StartX,0.f,120.f),false,nullptr,ETeleportType::TeleportPhysics);
     const bool bPatchArt = LoadArt(ImportedPatch, TEXT("/Game/Art/PATCH.PATCH"), 190.f);
     const TCHAR* Paths[] = {TEXT("/Game/Art/PATCH_Body.PATCH_Body"),TEXT("/Game/Art/PATCH_Arm_L.PATCH_Arm_L"),TEXT("/Game/Art/PATCH_Arm_R.PATCH_Arm_R"),TEXT("/Game/Art/PATCH_Leg_L.PATCH_Leg_L"),TEXT("/Game/Art/PATCH_Leg_R.PATCH_Leg_R")};
     // Imported parts are turned 180 degrees to face the camera, so source X pivots mirror.
@@ -255,11 +256,11 @@ void ASLPatchCharacter::MoveRight(float Value)
     if (ASLGameMode* GM = Game())
     {
         if (!GM->IsGameplayActive()) return;
-        if (!FMath::IsNearlyZero(Value)) Facing = FMath::Sign(Value);
-        AddMovementInput(FVector::ForwardVector, Value);
+        if (!FMath::IsNearlyZero(Value)) Facing = -FMath::Sign(Value);
+        // Camera looks along +Y, so its screen-right vector points along -X.
+        AddMovementInput(-FVector::ForwardVector, Value);
     }
 }
-void ASLPatchCharacter::BeginJump() { if (ASLGameMode* GM = Game()) if (GM->IsGameplayActive()) Jump(); }
 void ASLPatchCharacter::Interact() { if (ASLGameMode* GM = Game()) GM->Interact(); }
 void ASLPatchCharacter::Patch() { if (ASLGameMode* GM = Game()) GM->OpenPatch(); }
 void ASLPatchCharacter::Guide() { if (ASLGameMode* GM = Game()) GM->ToggleGuide(); }
@@ -275,8 +276,6 @@ void ASLPatchCharacter::SetupPlayerInputComponent(UInputComponent* Input)
 {
     Super::SetupPlayerInputComponent(Input);
     Input->BindAxis(TEXT("MoveRight"), this, &ASLPatchCharacter::MoveRight);
-    Input->BindAction(TEXT("Jump"), IE_Pressed, this, &ASLPatchCharacter::BeginJump);
-    Input->BindAction(TEXT("Jump"), IE_Released, this, &ACharacter::StopJumping);
     Input->BindAction(TEXT("Interact"), IE_Pressed, this, &ASLPatchCharacter::Interact);
     Input->BindAction(TEXT("Patch"), IE_Pressed, this, &ASLPatchCharacter::Patch);
     Input->BindAction(TEXT("Guide"), IE_Pressed, this, &ASLPatchCharacter::Guide);

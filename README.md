@@ -4,7 +4,7 @@
 
 SHIFT LEFT is a side-scrolling DevSecOps adventure for GitHub Game Off 2026. Players learn by investigating failures, changing simulated pipeline controls, and validating consequences.
 
-**Current direction: downloadable Unreal Engine game, with Apple silicon Mac as the next target.** Start with the [Mac setup and handoff](unreal/MAC_HANDOFF.md). The latest native source includes a verified Linux slice of The Leaked Secret and its generated assets; the Mac build still requires verification on a Mac. The [native project guide](unreal/README.md) records the Linux results, and [the iOS port assessment](unreal/IOS_PORT.md) tracks mobile work. The existing browser version remains available; the browser instructions below describe that version.
+**Current direction: downloadable Unreal Engine game for Apple silicon Mac.** The native Leaked Secret slice now compiles, renders and packages locally on Mac; see the [Mac handoff](unreal/MAC_HANDOFF.md) for exact playtest results and remaining issues. Gameplay corrections align the world and controls with SOURCE → PRODUCTION, remove the unused jump action, and restore DOC's plain-language text questions. The [native project guide](unreal/README.md) also preserves the Linux results, and [the iOS port assessment](unreal/IOS_PORT.md) tracks mobile work. The existing browser version remains available; the browser instructions below describe that version.
 
 ## Audience
 

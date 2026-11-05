@@ -1,20 +1,24 @@
 #include "SLAutoplay.h"
 #include "SLGameMode.h"
+#include "SLDocChat.h"
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerController.h"
+#include "Camera/PlayerCameraManager.h"
 #include "GameFramework/WorldSettings.h"
 #include "Framework/Application/SlateApplication.h"
 #include "HAL/PlatformMisc.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/App.h"
 #include "Misc/Paths.h"
+#include "Misc/ConfigCacheIni.h"
 #include "UnrealClient.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogSLAutoplay, Display, All);
 
 namespace
 {
-    constexpr float StationX(int32 Station) { return -2400.f + Station * 1200.f; }
+    constexpr float StationX(int32 Station) { return 2400.f - Station * 1200.f; }
     const TCHAR* PanelName(ESLPanel Panel)
     {
         switch (Panel)
@@ -54,7 +58,9 @@ void ASLAutoplay::SendKey(const FKey& Key, bool bDown)
 {
     // Real key events through Slate reach the viewport and the legacy input bindings.
     FSlateApplication& Slate = FSlateApplication::Get();
-    Slate.SetAllUserFocusToGameViewport();
+    // Keep a real text field's focus. Forcing the viewport before every injected
+    // key made UI-only DOC unable to receive Escape or ordinary typing.
+    if (!Mode() || Mode()->GetPanel() != ESLPanel::Doc) Slate.SetAllUserFocusToGameViewport();
     const FKeyEvent Event(Key, FModifierKeysState(), 0, false, 0, 0);
     const bool bHandled = bDown ? Slate.ProcessKeyDownEvent(Event) : Slate.ProcessKeyUpEvent(Event);
     if (bDown) HeldKeys.Add(Key); else HeldKeys.Remove(Key);
@@ -88,8 +94,8 @@ void ASLAutoplay::WalkTo(int32 Station)
         const APawn* Pawn = Player(this);
         if (!Pawn) return false;
         const float Delta = StationX(Station) - Pawn->GetActorLocation().X;
-        const FKey Want = Delta < 0.f ? EKeys::A : EKeys::D;
-        const FKey Other = Delta < 0.f ? EKeys::D : EKeys::A;
+        const FKey Want = Delta < 0.f ? EKeys::D : EKeys::A;
+        const FKey Other = Delta < 0.f ? EKeys::A : EKeys::D;
         if (FMath::Abs(Delta) < 70.f || StepTime > 20.f)
         {
             if (HeldKeys.Contains(Want)) SendKey(Want, false);
@@ -175,18 +181,33 @@ void ASLAutoplay::Build()
         Tap(EKeys::One, 1.5f);
         Shot(TEXT("grid-production"));
         Expect(TEXT("entering the grid starts music"), [](const ASLGameMode& M) { return M.IsMusicPlaying(); });
+        Expect(TEXT("source to production agrees with screen-right"), [this](const ASLGameMode& M)
+        {
+            const auto* PC = UGameplayStatics::GetPlayerController(this, 0);
+            return PC && PC->PlayerCameraManager && M.GetCurrentStageIndex() == 4
+                && FVector::DotProduct(PC->PlayerCameraManager->GetCameraRotation().RotateVector(FVector::RightVector), FVector(StationX(4)-StationX(0),0,0)) > 4000.f;
+        });
+        const auto BeforeMove = MakeShared<FVector>(FVector::ZeroVector);
+        Steps.Add([this, BeforeMove](float) { *BeforeMove = Player(this)->GetActorLocation(); return true; });
         Steps.Add([this](float) { SendKey(EKeys::D, true); return true; });
         Wait(.45f);
+        Expect(TEXT("D moves right on screen"), [this, BeforeMove](const ASLGameMode&)
+        {
+            auto* PC = UGameplayStatics::GetPlayerController(this, 0);
+            FVector2D Before, After;
+            return PC && PC->ProjectWorldLocationToScreen(*BeforeMove, Before)
+                && PC->ProjectWorldLocationToScreen(Player(this)->GetActorLocation(), After) && After.X > Before.X + 50.f;
+        });
         Shot(TEXT("walk-right"));
         Steps.Add([this](float) { SendKey(EKeys::D, false); return true; });
         Wait(.6f);
         Steps.Add([this](float) { SendKey(EKeys::SpaceBar, true); return true; });
         Wait(.25f);
-        Expect(TEXT("space jumps"), [this](const ASLGameMode&) { return Player(this) && Player(this)->GetActorLocation().Z > 150.f; });
-        Shot(TEXT("jump"));
+        Expect(TEXT("space has no unrelated jump action"), [this](const ASLGameMode&) { return Player(this) && Player(this)->GetActorLocation().Z < 115.f; });
+        Shot(TEXT("grounded"));
         Steps.Add([this](float) { SendKey(EKeys::SpaceBar, false); return true; });
         Wait(1.2f);
-        Expect(TEXT("floor collision holds after landing"), [this](const ASLGameMode&) { const float Z = Player(this) ? Player(this)->GetActorLocation().Z : -1.f; return Z > 90.f && Z < 115.f; });
+        Expect(TEXT("floor collision keeps PATCH grounded"), [this](const ASLGameMode&) { const float Z = Player(this) ? Player(this)->GetActorLocation().Z : -1.f; return Z > 90.f && Z < 115.f; });
         WalkTo(4);
         Tap(EKeys::E);
         Shot(TEXT("production-terminal"));
@@ -253,7 +274,7 @@ void ASLAutoplay::Build()
         Tap(EKeys::Escape, .5f);
         Tap(EKeys::Two, 1.f);
         Shot(TEXT("retry"));
-        Expect(TEXT("retry restores budget and position"), [this](const ASLGameMode& M) { const auto& S = M.GetIncident(); return S.effortSpent == 0 && !S.credentialRevoked && M.GetPanel() == ESLPanel::None && Player(this) && FMath::Abs(Player(this)->GetActorLocation().X - 2220.f) < 60.f; });
+        Expect(TEXT("retry restores budget and position"), [this](const ASLGameMode& M) { const auto& S = M.GetIncident(); return S.effortSpent == 0 && !S.credentialRevoked && M.GetPanel() == ESLPanel::None && Player(this) && FMath::Abs(Player(this)->GetActorLocation().X + 2220.f) < 60.f; });
     }
     else if (Scenario == TEXT("guided"))
     {
@@ -285,14 +306,66 @@ void ASLAutoplay::Build()
         Steps.Add([this](float) { SendKey(EKeys::D, true); return true; });
         Wait(4.f);
         Steps.Add([this](float) { SendKey(EKeys::D, false); return true; });
-        Expect(TEXT("DOC pauses exposure and movement"), [this, Before](const ASLGameMode& M) { return M.GetIncident().exposedMilliseconds - *Before < 600 && Player(this) && FMath::Abs(Player(this)->GetActorLocation().X - 2220.f) < 30.f; });
-        Tap(EKeys::Q, 2.f);
+        Expect(TEXT("DOC pauses exposure and movement"), [this, Before](const ASLGameMode& M) { return M.GetIncident().exposedMilliseconds - *Before < 600 && Player(this) && FMath::Abs(Player(this)->GetActorLocation().X + 2220.f) < 30.f; });
+        Tap(EKeys::Escape, 2.f);
         Expect(TEXT("closing DOC resumes exposure"), [Before](const ASLGameMode& M) { return M.GetIncident().exposedMilliseconds - *Before > 1500; });
         Tap(EKeys::M, .5f);
         Expect(TEXT("M stops music"), [](const ASLGameMode& M) { return !M.IsMusicPlaying(); });
         Shot(TEXT("music-off"));
         Tap(EKeys::M, .5f);
         Expect(TEXT("M restarts music"), [](const ASLGameMode& M) { return M.IsMusicPlaying(); });
+    }
+    else if (Scenario == TEXT("doc") || Scenario == TEXT("doc-live"))
+    {
+        Tap(EKeys::One, .5f);
+        Tap(EKeys::Q, .5f);
+        Shot(TEXT("question-panel"));
+        Steps.Add([](float)
+        {
+            for (TCHAR Character : FString(TEXT("adq"))) FSlateApplication::Get().ProcessKeyCharEvent(FCharacterEvent(Character, FModifierKeysState(), 0, false));
+            return true;
+        });
+        Expect(TEXT("typing movement and DOC keys edits the question"), [](const ASLGameMode& M)
+        {
+            return M.GetDocChat()->GetDraft() == TEXT("adq") && M.GetPanel() == ESLPanel::Doc;
+        });
+        Steps.Add([this](float)
+        {
+            Mode()->GetDocChat()->Ask(TEXT("Why isn't deleting the exposed key from source enough?"), Scenario == TEXT("doc"));
+            return true;
+        });
+        Steps.Add([this](float) { return !Mode()->GetDocChat()->IsPending() || StepTime > 35.f; });
+        Expect(TEXT("DOC answers a plain-language question and preserves the incident"), [this](const ASLGameMode& M)
+        {
+            const auto* Doc = M.GetDocChat();
+            return !Doc->IsPending() && Doc->GetTranscript().Contains(TEXT("You: Why isn't deleting"))
+                && Doc->GetTranscript().Contains(Scenario == TEXT("doc") ? TEXT("Offline guide:") : TEXT("DOC (live):"))
+                && !M.GetIncident().credentialRevoked && M.GetIncident().effortSpent == 0 && M.GetPanel() == ESLPanel::Doc;
+        });
+        Shot(TEXT("answer"));
+        if (Scenario == TEXT("doc"))
+        {
+            Steps.Add([this](float)
+            {
+                FString Agent;
+                GConfig->GetString(TEXT("ShiftLeft.Doc"), TEXT("AgentId"), Agent, GGameIni);
+                GConfig->SetString(TEXT("ShiftLeft.Doc"), TEXT("AgentId"), TEXT(""), GGameIni);
+                Mode()->GetDocChat()->Ask(TEXT("What is runtime routing?"));
+                GConfig->SetString(TEXT("ShiftLeft.Doc"), TEXT("AgentId"), *Agent, GGameIni);
+                return true;
+            });
+            Expect(TEXT("unavailable live DOC labels its offline fallback"), [](const ASLGameMode& M)
+            {
+                return !M.GetDocChat()->IsPending() && M.GetDocChat()->GetStatus().Contains(TEXT("not an AI answer"));
+            });
+            Shot(TEXT("offline-fallback"));
+        }
+        else
+        {
+            Steps.Add([this](float) { Mode()->GetDocChat()->Ask(TEXT("What should I inspect next?")); return true; });
+        }
+        Tap(EKeys::Escape, .5f);
+        Expect(TEXT("Escape closes DOC and cancels pending work"), [](const ASLGameMode& M) { return M.GetPanel() == ESLPanel::None && !M.GetDocChat()->IsPending(); });
     }
     else if (Scenario == TEXT("quit"))
     {

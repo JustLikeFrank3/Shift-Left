@@ -44,7 +44,6 @@ private:
     bool bArticulated = false;
     ASLGameMode* Game() const;
     void MoveRight(float Value);
-    void BeginJump();
     void Interact();
     void Patch();
     void Guide();

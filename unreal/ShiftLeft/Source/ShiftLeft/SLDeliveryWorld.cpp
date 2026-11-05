@@ -1,4 +1,5 @@
 #include "SLDeliveryWorld.h"
+#include "DeliveryLayout.h"
 #include "SLGameMode.h"
 #include "Components/DirectionalLightComponent.h"
 #include "Components/ExponentialHeightFogComponent.h"
@@ -41,7 +42,8 @@ void ASLDeliveryWorld::OnConstruction(const FTransform& Transform)
 void ASLDeliveryWorld::BeginPlay()
 {
     Super::BeginPlay();
-    if (BuiltComponents.IsEmpty()) RebuildWorld();
+    // Rebuild serialized geometry too, so committed maps pick up layout fixes.
+    RebuildWorld();
 }
 
 void ASLDeliveryWorld::RegisterPart(UActorComponent* Component)
@@ -187,7 +189,7 @@ void ASLDeliveryWorld::RebuildWorld()
     const TCHAR* Subtitles[] = {TEXT("PREVENT / 01  -  FIX 1"),TEXT("PACKAGE / 02  -  FIX 2"),TEXT("VERIFY / 03  -  FIX 4"),TEXT("REHEARSE / 04  -  FIX 8"),TEXT("CONTAIN / 05  -  FIX 16")};
     for (int32 Stage=0; Stage<5; ++Stage)
     {
-        const float X = -2400.f + Stage * 1200.f;
+        const float X = ShiftLeftLayout::StageX(Stage);
         UMaterialInterface* Accent = Stage==4?Coral:Teal;
         Cube(FVector(X,354,345),FVector(740,34,138),PanelMaterial);
         Cube(FVector(X,331,413),FVector(742,8,6),Accent);
@@ -205,14 +207,14 @@ void ASLDeliveryWorld::RebuildWorld()
         Cube(FVector(X-426,210,53),FVector(48,4,9),Accent);
         Shape(CylinderPath,FVector(X+425,280,55),FVector(.5f,.5f,1.1f),PanelMaterial);
         if (Stage < 4)
-            Sign(TEXT(">>"),FVector(X+590,310,180),70.f,FColor(53,113,131));
+            Sign(TEXT(">>"),FVector(X-590,310,180),70.f,FColor(53,113,131));
     }
-    Sign(TEXT("<  SHIFT THE FIX LEFT"),FVector(-1800,330,330),30.f,FColor(125,222,211));
-    Sign(TEXT("LIVE GRID / SYNTHETIC SYSTEM"),FVector(1800,330,330),26.f,FColor(249,147,120));
+    Sign(TEXT("<  SHIFT THE FIX LEFT"),FVector(1800,330,330),30.f,FColor(125,222,211));
+    Sign(TEXT("LIVE GRID / SYNTHETIC SYSTEM"),FVector(-1800,330,330),26.f,FColor(249,147,120));
     for (int32 Index=0; Index<7; ++Index)
-        LeakBars.Add(Cube(FVector(2640.f+(Index%3)*34.f,210,380.f+Index*34.f),FVector(12,12,60),Coral));
+        LeakBars.Add(Cube(FVector(-2640.f-(Index%3)*34.f,210,380.f+Index*34.f),FVector(12,12,60),Coral));
     LeakLight = NewObject<UPointLightComponent>(this,NAME_None,RF_Transactional);
-    LeakLight->SetRelativeLocation(FVector(2630,140,340)); LeakLight->SetLightColor(FLinearColor(1,.05f,.02f));
+    LeakLight->SetRelativeLocation(FVector(-2630,140,340)); LeakLight->SetLightColor(FLinearColor(1,.05f,.02f));
     LeakLight->SetIntensity(12000); LeakLight->SetAttenuationRadius(700); LeakLight->SetCastShadows(false);
     RegisterPart(LeakLight);
 
@@ -250,7 +252,7 @@ void ASLDeliveryWorld::Tick(float DeltaSeconds)
     {
         LeakBars[Index]->SetVisibility(bLeak);
         const float Cycle = FMath::Fmod(WorldTime * 1.25f + Index*.19f,1.f);
-        LeakBars[Index]->SetRelativeLocation(FVector(2630.f+(Index%3)*32.f,200.f,280.f+Cycle*350.f));
+        LeakBars[Index]->SetRelativeLocation(FVector(-2630.f-(Index%3)*32.f,200.f,280.f+Cycle*350.f));
         LeakBars[Index]->SetRelativeScale3D(FVector(.09f,.09f,.25f+Cycle*.5f));
     }
     if (LeakLight) LeakLight->SetIntensity(bLeak?10000.f+FMath::Sin(WorldTime*6.f)*2000.f:0.f);

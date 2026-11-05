@@ -165,7 +165,7 @@ def main():
     actor.set_actor_label("SHIFT LEFT / Delivery Grid")
     # Clear of the deck (top at Z=0) so the default pawn never spawns inside it.
     start = actor_subsystem.spawn_actor_from_class(
-        unreal.PlayerStart, unreal.Vector(2220, 0, 112), unreal.Rotator(0, 0, 0)
+        unreal.PlayerStart, unreal.Vector(-2220, 0, 112), unreal.Rotator(0, 0, 0)
     )
     if start is None:
         raise RuntimeError("Could not place the PATCH player start.")

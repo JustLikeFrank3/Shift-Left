@@ -46,5 +46,9 @@ for cooked_file in ShiftLeft-Mac.pak ShiftLeft-Mac.utoc ShiftLeft-Mac.ucas; do
     exit 2
   fi
 done
+if [ ! -s "$app_dir/Contents/UE/Engine/Content/Certificates/ThirdParty/cacert.pem" ]; then
+  printf '%s\n' 'BLOCKED: archived app is missing the CA bundle needed by live DOC.' >&2
+  exit 2
+fi
 codesign --verify --deep --strict "$app_dir"
 printf 'Mac package archived to %s. Launch and playtest it on the target Mac before sharing.\n' "$output_dir"

@@ -1,4 +1,6 @@
 #include "SLGameMode.h"
+#include "SLDocChat.h"
+#include "DeliveryLayout.h"
 #include "SLDeliveryWorld.h"
 #include "SLAutoplay.h"
 #include "SLGameHUD.h"
@@ -14,7 +16,6 @@
 
 namespace
 {
-    constexpr float StationSpacing = 1200.f;
     const TCHAR* StageNames[] = {TEXT("SOURCE"), TEXT("BUILD"), TEXT("TEST"), TEXT("STAGING"), TEXT("PRODUCTION")};
     FString FromModel(const std::string& Text) { return UTF8_TO_TCHAR(Text.c_str()); }
     FSLChoice Choice(const TCHAR* Label, const FString& Detail, const TCHAR* State = TEXT(""))
@@ -31,6 +32,7 @@ ASLGameMode::ASLGameMode()
     DefaultPawnClass = ASLPatchCharacter::StaticClass();
     HUDClass = ASLGameHUD::StaticClass();
     Score = CreateDefaultSubobject<UAudioComponent>(TEXT("OriginalScore"));
+    DocChat = CreateDefaultSubobject<USLDocChat>(TEXT("DocChat"));
     Score->bAutoActivate = false;
     Score->bAllowSpatialization = false;
     Score->bIsUISound = true;
@@ -44,7 +46,7 @@ void ASLGameMode::BeginPlay()
     if (!TActorIterator<ASLDeliveryWorld>(GetWorld())) GetWorld()->SpawnActor<ASLDeliveryWorld>();
     Score->SetSound(LoadObject<USoundBase>(nullptr, TEXT("/Game/Audio/SignalInTheDark.SignalInTheDark")));
     if (APawn* Pawn = UGameplayStatics::GetPlayerPawn(this, 0))
-        Pawn->SetActorLocation(FVector(2220.f, 0.f, 120.f), false, nullptr, ETeleportType::TeleportPhysics);
+        Pawn->SetActorLocation(FVector(ShiftLeftLayout::StartX, 0.f, 120.f), false, nullptr, ETeleportType::TeleportPhysics);
     OpenPanel(ESLPanel::Help);
     FString AutoplayScenario;
     if (FParse::Value(FCommandLine::Get(), TEXT("SLAutoplay="), AutoplayScenario)) GetWorld()->SpawnActor<ASLAutoplay>();
@@ -71,7 +73,7 @@ bool ASLGameMode::IsGameplayActive() const
 int32 ASLGameMode::GetCurrentStageIndex() const
 {
     const APawn* Pawn = UGameplayStatics::GetPlayerPawn(this, 0);
-    return Pawn ? FMath::Clamp(FMath::RoundToInt((Pawn->GetActorLocation().X + 2400.f) / StationSpacing), 0, 4) : 4;
+    return Pawn ? FMath::Clamp(FMath::RoundToInt((ShiftLeftLayout::StageX(0) - Pawn->GetActorLocation().X) / ShiftLeftLayout::Spacing), 0, 4) : 4;
 }
 
 int32 ASLGameMode::GetNearbyStationIndex() const
@@ -79,7 +81,7 @@ int32 ASLGameMode::GetNearbyStationIndex() const
     const APawn* Pawn = UGameplayStatics::GetPlayerPawn(this, 0);
     if (!Pawn) return -1;
     const int32 Index = GetCurrentStageIndex();
-    return FMath::Abs(Pawn->GetActorLocation().X - (-2400.f + Index * StationSpacing)) <= 420.f ? Index : -1;
+    return FMath::Abs(Pawn->GetActorLocation().X - ShiftLeftLayout::StageX(Index)) <= 420.f ? Index : -1;
 }
 
 FString ASLGameMode::GetStationLabel() const
@@ -89,10 +91,12 @@ FString ASLGameMode::GetStationLabel() const
 
 void ASLGameMode::OpenPanel(ESLPanel NewPanel)
 {
+    if (Panel == ESLPanel::Doc && NewPanel != ESLPanel::Doc) DocChat->Hide();
     Panel = NewPanel;
     if (APawn* Pawn = UGameplayStatics::GetPlayerPawn(this, 0))
         if (UMovementComponent* Movement = Pawn->GetMovementComponent()) Movement->StopMovementImmediately();
     UpdatePointer();
+    if (NewPanel == ESLPanel::Doc) DocChat->Show();
 }
 
 void ASLGameMode::UpdatePointer()
@@ -115,6 +119,7 @@ void ASLGameMode::UpdatePointer()
 
 void ASLGameMode::ClosePanel()
 {
+    if (Panel == ESLPanel::Doc) DocChat->Hide();
     if (Incident.completed || Incident.failed) { OpenPanel(ESLPanel::Complete); return; }
     Panel = ESLPanel::None;
     bHasEnteredGrid = true;
@@ -224,7 +229,7 @@ void ASLGameMode::RestartIncident()
     Incident = ShiftLeft::Retry(Incident);
     MillisecondRemainder = 0;
     if (APawn* Pawn = UGameplayStatics::GetPlayerPawn(this, 0))
-        Pawn->SetActorLocation(FVector(2220.f, 0.f, 120.f), false, nullptr, ETeleportType::TeleportPhysics);
+        Pawn->SetActorLocation(FVector(ShiftLeftLayout::StartX, 0.f, 120.f), false, nullptr, ETeleportType::TeleportPhysics);
     ClosePanel();
 }
 
@@ -233,7 +238,7 @@ FString ASLGameMode::GetPanelTitle() const
     switch (Panel)
     {
     case ESLPanel::Help: return TEXT("PATCH // THE LEAKED SECRET");
-    case ESLPanel::Doc: return TEXT("DOC // LOCAL REFERENCE");
+    case ESLPanel::Doc: return TEXT("Ask DOC");
     case ESLPanel::Complete: return Incident.completed ? TEXT("RELEASE VERIFIED") : TEXT("INCIDENT REVIEW");
     case ESLPanel::Patch: return FString::Printf(TEXT("PATCH! // %s"), StageNames[PanelStation]);
     case ESLPanel::Station: return FString::Printf(TEXT("%s // DELIVERY TERMINAL"), StageNames[PanelStation]);
@@ -244,9 +249,9 @@ FString ASLGameMode::GetPanelTitle() const
 FString ASLGameMode::GetPanelBody() const
 {
     if (Panel == ESLPanel::Help)
-        return TEXT("You are PATCH. A credential escaped in a shipped image. Contain the incident and prepare a safe release. SOURCE is left; PRODUCTION is right.\nA / D: move. E: connect. F: Patch! R: validate. Q: DOC. Space: jump. M: music. Esc or H: this guide.\nRepair effort doubles at each stage; budget 24. Reading pauses the clock. Guided mode removes the exposure deadline. Music begins when you enter.");
+        return TEXT("You are PATCH. A credential escaped in a shipped image. Contain the incident and prepare a safe release. SOURCE is left; PRODUCTION is right.\nA / D: move. E: connect. F: Patch! R: validate. Q: DOC. M: music. Esc or H: this guide.\nRepair effort doubles at each stage; budget 24. Reading pauses the clock. Guided mode removes the exposure deadline. Music begins when you enter.");
     if (Panel == ESLPanel::Doc)
-        return TEXT("LOCAL REFERENCE / OFFLINE. Authored guidance; no live AI service is connected.\n\nContain: review usage, revoke the exposed key, provision a replacement. Editing a file cannot invalidate a copied credential.\nRoute: a runtime binding gives the service its key. An artifact distributes another extractable copy. If a replacement escapes, revoke it and issue another.\nPrevent: remove the source literal, install an early secret check, then validate. Existing artifacts are separate from source; the runtime route builds a clean image.\n\nEffort from SOURCE to PRODUCTION: 1 / 2 / 4 / 8 / 16. Emergency actions are free. Escape > Retry resets the incident and budget.");
+        return TEXT("Type a game question. Send uses live DOC; Offline guide stays local. Escape returns to PATCH.");
     if (Panel == ESLPanel::Complete)
         return FString::Printf(TEXT("GRADE %s\n\nEffort %d / %d    |    Exposure %.1f seconds    |    Routing incidents %d\n\n%s\n\nOne incident in this vertical slice. Retry to compare another repair location or routing decision."), *FromModel(ShiftLeft::Grade(Incident)), Incident.effortSpent, Incident.budget, static_cast<double>(Incident.exposedMilliseconds) / 1000.0, Incident.mistakes, *FromModel(Incident.feedback));
     const FString Feedback = FromModel(Incident.feedback);

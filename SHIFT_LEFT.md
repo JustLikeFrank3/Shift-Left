@@ -139,3 +139,11 @@ Native integration remains uncompiled until Unreal is installed on a capable Lin
 The participant is developing on an Apple silicon Mac. Use Unreal 5.8 and the Mac toolchain; preserve the newer Linux branch's recorded native verification and generated content. `feat/unreal-mac-build` starts from the latest Linux head `af72e1a`, including its compile, playtest, packaging, character and Quit fixes. See [the Mac handoff](unreal/MAC_HANDOFF.md). Mac verification is pending an actual Mac build; the earlier uncompiled status above describes the original scaffold, not the later Linux checkpoint.
 
 An iOS version is under consideration after the Mac slice works. It requires mobile lighting instead of desktop Lumen, touch controls, safe-area layouts, lifecycle handling and signed physical-device testing. [The port assessment](unreal/IOS_PORT.md) records those requirements; it is not an implemented mobile release.
+
+## Native gameplay corrections — November 5
+
+The corridor and controls must agree with the player's screen: SOURCE → BUILD → TEST → STAGING → PRODUCTION, with A/left moving left and D/right moving right. The side camera makes negative world X appear screen-right, so scene placement and movement use that convention together. PATCH begins at production, contains the leak, and traces left toward cheaper structural repairs.
+
+The flat investigation corridor has no jump action. Jumping had no obstacle, reward or incident consequence; adding arbitrary platforming would dilute the investigation. Reintroduce it only with a deliberate traversal mechanic worth testing.
+
+DOC again accepts plain-language typed questions in the native game, using the existing public text-only ElevenLabs agent. The question, recent discussion and synthetic incident state are sent only on submission. DOC remains advisory and cannot apply game actions. A separate offline reference and an explicitly labeled connection-failure fallback keep investigation playable without the service. Chat pauses movement and incident pressure, typing must not trigger gameplay shortcuts, and Escape cancels pending work. Native verification and connection limits are recorded in the Mac handoff.

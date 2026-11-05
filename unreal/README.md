@@ -1,8 +1,8 @@
 # SHIFT LEFT — Unreal vertical slice
 
-This is the native Unreal Engine 5.8 port of **The Leaked Secret**. It contains C++ gameplay source, an independently tested incident simulation, original Blender/FBX art, and scripts to import the assets, create a map and package Linux builds.
+This is the native Unreal Engine 5.8 port of **The Leaked Secret**. It contains C++ gameplay source, an independently tested incident simulation, original Blender/FBX art, and scripts to import the assets, create a map and package Mac/Linux builds.
 
-**Mac is the current development target.** Use [MAC_HANDOFF.md](MAC_HANDOFF.md) for Apple silicon installation, build, playtest and packaging commands on branch `feat/unreal-mac-build`. It starts from the latest Linux branch at `af72e1a`, including its verified native fixes and committed assets. On November 5, UE 5.8.4 compiled and rendered on an M3 Max, and an arm64 Development app was packaged and playtested. All six scenarios passed in editor runtime and eventually in the package, but two packaged launches crashed before startup and required retries; this reliability issue remains open. The user confirmed audible music. See the handoff for exact results and input-testing limits. [IOS_PORT.md](IOS_PORT.md) describes the additional mobile work; an iOS package is not implemented yet. The Linux instructions and recorded results below remain available.
+**Mac is the current development target.** Use [MAC_HANDOFF.md](MAC_HANDOFF.md) for Apple silicon installation, build, playtest and packaging commands on branch `feat/unreal-mac-build`. It starts from the latest Linux branch at `af72e1a`, including its verified native fixes and committed assets. On November 5, UE 5.8.4 compiled and rendered on an M3 Max, and an arm64 Development app was packaged and playtested. The gameplay correction pass aligns screen directions and stage order, removes the unused jump action, and restores native typed DOC questions. Seven offline packaged scenarios passed after fixing a DOC startup-initialization defect; the final archive also passed the full incident with grade S and a real live DOC question after staging its CA bundle. The user confirmed audible music. See the handoff for exact results, earlier startup failures, connection limits and input-testing scope. [IOS_PORT.md](IOS_PORT.md) describes the additional mobile work; an iOS package is not implemented yet. The Linux instructions and recorded results below remain available.
 
 **Current verification (2026-11-04, UE 5.8.0, Ubuntu 26.04, RTX 5060 Ti):** the native module compiles, the bootstrap imports the art and score and saves the map, and a packaged Linux Development build (`build/Linux/ShiftLeft.sh`) launches and renders on Vulkan. Scripted in-engine playtests pass in both the editor's `-game` mode and the packaged build: the full incident (grade S), the wrong route and its recovery, the effort budget and retry, guided versus standard deadlines, paused reading time and the M music toggle. The portable model still passes its 68 GCC checks. See [HANDOFF.md](HANDOFF.md#native-verification-results) for what this does and does not cover. The package is built locally and not published.
 
@@ -66,24 +66,25 @@ The source preflight checks the original FBX headers, stereo WAV format, native 
 
 ## How play is intended to work
 
-PATCH begins beside the live production leak, with DOC floating nearby. The corridor runs left to right through SOURCE, BUILD, TEST, STAGE and PROD. Walk and jump along the deck; the camera follows PATCH. Walk up to a terminal and press E to investigate or contain the leak. Press F nearby to open **PATCH!** and choose a credential route. Travel left to make structural repairs cheaper.
+PATCH begins beside the live production leak, with DOC floating nearby. The corridor runs left to right through SOURCE, BUILD, TEST, STAGE and PROD. Walk along the deck; the camera follows PATCH. Walk up to a terminal and press E to investigate or contain the leak. Press F nearby to open **PATCH!** and choose a credential route. Travel left to make structural repairs cheaper.
 
 | Control | Action |
 | --- | --- |
 | A / D or ← / → | Walk along the corridor |
-| Space | Jump |
 | E | Connect to the nearby terminal |
 | F | Open PATCH! at the nearby terminal |
-| Q | Open DOC's offline guide |
+| Q | Ask DOC a plain-language question |
 | R | Validate the incident |
 | M | Toggle the original score |
 | 1 / 2 / 3 (4 in help) or mouse | Choose an operation in a panel |
 | Escape / H | Close a panel or open help (H also works in Play-in-Editor, where Escape stops play) |
 | 4 in help | Quit the game |
 
+The camera, stage locations and A/D controls use screen-left/screen-right consistently: SOURCE → BUILD → TEST → STAGING → PRODUCTION. This flat investigation corridor has no jump action; all terminals are reachable from the floor.
+
 The first panel explains the controls. Standard mode has a three-minute active exposure window; guided mode removes time-based failure. Reading terminal/help/DOC panels pauses that window. Revoking an exposed credential is free and stops its exploitation, so containment is accessible before longer investigation. Wrong routes can re-expose the replacement. Repairs draw from 24 effort; free investigation and containment never require leftward travel. Retry starts a fresh incident if pressure or poor spending makes the run unsalvageable.
 
-The source campaign JSON is included as reference data. **Only The Leaked Secret has native gameplay.** DOC is initially a local explanatory panel; the public ElevenLabs live text agent remains available in the browser implementation and has not been connected to native UI. The score is the existing original _Signal in the Dark_ candidate, not a newly approved soundtrack. Audio provenance is in [the parent audio notes](../public/audio/README.md).
+The source campaign JSON is included as reference data. **Only The Leaked Secret has native gameplay.** DOC now has a native typed-question panel using the same public ElevenLabs text-only agent as the browser. Opening DOC pauses movement and incident pressure. Only Send transmits the question, recent discussion and synthetic mission snapshot; no microphone, API key or game-action tools are used. The Offline guide button answers common topics locally. Connection failures visibly identify the authored fallback. Escape cancels a pending request and returns to PATCH; typing Q, A or D in the question field does not control the game. The score is the existing original _Signal in the Dark_ candidate, not a newly approved soundtrack. Audio provenance is in [the parent audio notes](../public/audio/README.md).
 
 ## Package for Linux
 
@@ -102,7 +103,9 @@ The archive goes to `unreal/build/Linux/` by default; launch it with `build/Linu
 SL_GAME="$PWD/build/Linux/ShiftLeft.sh" ./scripts/playtest-linux.sh -     # packaged build
 ```
 
-Each scenario (`complete`, `wrong`, `budget`, `guided`, `pause`, `quit`) starts the game with `-SLAutoplay=<scenario>`, sends key events through Slate into the normal input bindings, saves in-engine screenshots and logs PASS/FAIL checks to `playtest/<scenario>.log`. A window opens; do not type into it while it runs. It does not replace a human playtest: it does not use the OS keyboard, the mouse, or listen to the audio.
+On Mac, use `./scripts/playtest-mac.sh /path/to/UE_5.8` (includes the offline `doc` test), or pass `doc-live` explicitly for a real ElevenLabs question. Use `SL_GAME=/absolute/path/ShiftLeft.app/Contents/MacOS/ShiftLeft ./scripts/playtest-mac.sh -` to test the package. The Mac runner stops on a process crash and keeps editor/package logs separate.
+
+Each baseline scenario (`complete`, `wrong`, `budget`, `guided`, `pause`, `quit`) starts the game with `-SLAutoplay=<scenario>`, sends key events through Slate into the normal input bindings, saves in-engine screenshots and logs PASS/FAIL checks to `playtest/<scenario>.log`. A window opens; do not type into it while it runs. It does not replace a human playtest: it does not use the OS keyboard, the mouse, or listen to the audio.
 
 ## Source and verification
 
@@ -112,4 +115,4 @@ Each scenario (`complete`, `wrong`, `budget`, `guided`, `pause`, `quit`) starts 
 - `ShiftLeft/Content/ArtSource/`: FBX geometry consumed by the editor bootstrap.
 - `scripts/bootstrap_editor.py`: Unreal-only asset/material/map import.
 
-Before calling this a playable native release, verify compilation; FBX size, pivot and facing; readable camera and characters; collision/jumping and terminal reach; all repair/retry paths; mouse and keyboard focus; music and mute; exposure pausing; Lumen/performance on the target GPU; and a packaged Linux launch. Model tests and Blender previews do not substitute for those checks.
+Before calling this a playable native release, verify compilation; FBX size, pivot and facing; readable camera and characters; floor collision and terminal reach; all repair/retry paths; mouse and keyboard focus; music and mute; exposure pausing; Lumen/performance on the target GPU; and a packaged Linux launch. Model tests and Blender previews do not substitute for those checks.
