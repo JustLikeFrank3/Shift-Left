@@ -11,6 +11,15 @@ python3 "$script_dir/verify-source.py"
 "$engine_dir/Engine/Build/BatchFiles/Linux/Build.sh" ShiftLeftEditor Linux Development "$project_file" -WaitMutex
 editor="$engine_dir/Engine/Binaries/Linux/UnrealEditor-Cmd"
 if [ ! -x "$editor" ]; then editor="$engine_dir/Engine/Binaries/Linux/UnrealEditor"; fi
+content_dir="$unreal_dir/ShiftLeft/Content"
+if [ -d "$content_dir/Maps" ] || [ -d "$content_dir/Art" ]; then
+  backup_dir="$unreal_dir/ShiftLeft/Saved/ContentBackups/$(date +%Y%m%d-%H%M%S)"
+  mkdir -p -- "$backup_dir"
+  for part in Maps Art Audio; do
+    if [ -d "$content_dir/$part" ]; then cp -a -- "$content_dir/$part" "$backup_dir/"; fi
+  done
+  printf 'Backed up existing generated content to %s before regenerating it.\n' "$backup_dir"
+fi
 rm -f -- "$success_marker"
 "$editor" "$project_file" /Engine/Maps/Entry -unattended -nop4 -nosplash -NullRHI -stdout -FullStdOutLogOutput -ExecutePythonScript="$script_dir/bootstrap_editor.py"
 if [ ! -f "$success_marker" ] || [ ! -f "$unreal_dir/ShiftLeft/Content/Maps/DeliveryGrid.umap" ]; then

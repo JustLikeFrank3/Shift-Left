@@ -12,6 +12,7 @@ PROJECT = Path(unreal.Paths.convert_relative_path_to_full(unreal.Paths.project_d
 ART_SOURCE = PROJECT / "Content" / "ArtSource"
 ART_ROOT = "/Game/Art"
 MATERIAL_ROOT = ART_ROOT + "/Materials"
+MAP_PATH = "/Game/Maps/DeliveryGrid"
 SUCCESS_MARKER = PROJECT / "Saved" / "ShiftLeft" / "bootstrap-success.json"
 COLORS = {
     "M_Navy": ((0.025, 0.075, 0.115), 0.35, 0.34, 0),
@@ -151,20 +152,31 @@ def main():
     if world_class is None or game_class is None:
         raise RuntimeError("Build ShiftLeftEditor before running this bootstrap.")
     level_subsystem = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
-    if not level_subsystem.new_level("/Game/Maps/DeliveryGrid"):
+    # build-linux.sh copies Content/Maps to Saved/ContentBackups before this runs.
+    if unreal.EditorAssetLibrary.does_asset_exist(MAP_PATH):
+        if not unreal.EditorAssetLibrary.delete_asset(MAP_PATH):
+            raise RuntimeError("Could not replace the existing delivery-grid level.")
+    if not level_subsystem.new_level(MAP_PATH):
         raise RuntimeError("Could not create the delivery-grid level.")
     actor_subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     actor = actor_subsystem.spawn_actor_from_class(world_class, unreal.Vector(0, 0, 0))
     if actor is None:
         raise RuntimeError("Could not spawn the native delivery-grid actor.")
     actor.set_actor_label("SHIFT LEFT / Delivery Grid")
+    # Clear of the deck (top at Z=0) so the default pawn never spawns inside it.
+    start = actor_subsystem.spawn_actor_from_class(
+        unreal.PlayerStart, unreal.Vector(2220, 0, 112), unreal.Rotator(0, 0, 0)
+    )
+    if start is None:
+        raise RuntimeError("Could not place the PATCH player start.")
+    start.set_actor_label("PATCH Start / PRODUCTION")
     world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
     world.get_world_settings().set_editor_property("default_game_mode", game_class)
     unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True, True)
     if not level_subsystem.save_current_level():
         raise RuntimeError("Could not save the delivery-grid level.")
     SUCCESS_MARKER.parent.mkdir(parents=True, exist_ok=True)
-    SUCCESS_MARKER.write_text(json.dumps({"map": "/Game/Maps/DeliveryGrid", "music": "/Game/Audio/SignalInTheDark"}))
+    SUCCESS_MARKER.write_text(json.dumps({"map": MAP_PATH, "music": "/Game/Audio/SignalInTheDark"}))
     unreal.log("SHIFT LEFT bootstrap complete. Open /Game/Maps/DeliveryGrid and press Play.")
 
 
