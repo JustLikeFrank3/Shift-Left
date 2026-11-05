@@ -195,10 +195,12 @@ void ASLDeliveryWorld::RebuildWorld()
         Cube(FVector(X,331,413),FVector(742,8,6),Accent);
         Sign(Names[Stage],FVector(X,328,362),Stage==4?52.f:66.f,Stage==4?FColor(255,150,119):FColor(143,250,233));
         Sign(Subtitles[Stage],FVector(X,328,314),23.f,FColor(124,166,183));
-        Cube(FVector(X,0,1),FVector(900,450,2),Navy);
-        StationStrips.Add(Cube(FVector(X,-219,4),FVector(880,8,4),Accent));
-        Cube(FVector(X-440,0,4),FVector(8,445,4),Accent);
-        Cube(FVector(X+440,0,4),FVector(8,445,4),Accent);
+        Cube(FVector(X,0,1),FVector(1200,450,2),Navy);
+        StationStrips.Add(Cube(FVector(X,-219,4),FVector(1200,8,4),Accent));
+        // Only the two corridor ends get transverse borders. Individual bays
+        // must not look like isolated walkable boards or false travel limits.
+        if (Stage == 0) Cube(FVector(X+600,0,4),FVector(8,445,4),Accent);
+        if (Stage == 4) Cube(FVector(X-600,0,4),FVector(8,445,4),Accent);
         Rack(FVector(X-290,230,0),1.f,Stage==4);
         Rack(FVector(X+270,300,0),.88f,Stage==4);
         Terminal(FVector(X,110,0),Stage);
@@ -207,7 +209,8 @@ void ASLDeliveryWorld::RebuildWorld()
         Cube(FVector(X-426,210,53),FVector(48,4,9),Accent);
         Shape(CylinderPath,FVector(X+425,280,55),FVector(.5f,.5f,1.1f),PanelMaterial);
         if (Stage < 4)
-            Sign(TEXT(">>"),FVector(X-590,310,180),70.f,FColor(53,113,131));
+            Sign(FString::Printf(TEXT("< %s   /   %s >"), Names[Stage], Names[Stage+1]),
+                 FVector(X-600,310,180),22.f,FColor(125,222,211));
     }
     Sign(TEXT("<  SHIFT THE FIX LEFT"),FVector(1800,330,330),30.f,FColor(125,222,211));
     Sign(TEXT("LIVE GRID / SYNTHETIC SYSTEM"),FVector(-1800,330,330),26.f,FColor(249,147,120));

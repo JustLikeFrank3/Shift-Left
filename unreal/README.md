@@ -103,7 +103,7 @@ The archive goes to `unreal/build/Linux/` by default; launch it with `build/Linu
 SL_GAME="$PWD/build/Linux/ShiftLeft.sh" ./scripts/playtest-linux.sh -     # packaged build
 ```
 
-On Mac, use `./scripts/playtest-mac.sh /path/to/UE_5.8` (includes the offline `doc` test), or pass `doc-live` explicitly for a real ElevenLabs question. Use `SL_GAME=/absolute/path/ShiftLeft.app/Contents/MacOS/ShiftLeft ./scripts/playtest-mac.sh -` to test the package. The Mac runner stops on a process crash and keeps editor/package logs separate.
+On Mac, use `./scripts/playtest-mac.sh /path/to/UE_5.8` (includes the offline `doc` test), or pass `doc-live` explicitly for a real ElevenLabs question. Use `SL_GAME=/absolute/path/ShiftLeft.app/Contents/MacOS/ShiftLeft ./scripts/playtest-mac.sh -` to test the package. The Mac runner stops on a process crash and keeps editor/package logs separate. Pass `layout` to walk both corridor endpoints and check rendered station signs. Set `SL_RES_X=1600 SL_RES_Y=1000` to check the HUD at a 16:10 aspect ratio; the defaults remain 1600×900.
 
 Each baseline scenario (`complete`, `wrong`, `budget`, `guided`, `pause`, `quit`) starts the game with `-SLAutoplay=<scenario>`, sends key events through Slate into the normal input bindings, saves in-engine screenshots and logs PASS/FAIL checks to `playtest/<scenario>.log`. A window opens; do not type into it while it runs. It does not replace a human playtest: it does not use the OS keyboard, the mouse, or listen to the audio.
 

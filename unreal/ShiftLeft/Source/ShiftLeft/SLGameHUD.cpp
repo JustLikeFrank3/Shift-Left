@@ -167,33 +167,29 @@ void ASLGameHUD::DrawHUD()
 void ASLGameHUD::DrawStatus(const ASLGameMode& Mode)
 {
     const ShiftLeft::IncidentState& State = Mode.GetIncident();
-    Box(28.f, 24.f, 1544.f, 124.f, Ink);
-    Rule(28.f, 24.f, 1544.f, Teal, 3.f);
-    Text(TEXT("SHIFT LEFT"), 48.f, 41.f, 27.f, White);
-    Text(TEXT("FIX TOMORROW'S BUGS YESTERDAY"), 49.f, 77.f, 13.f, Teal);
-    Rule(288.f, 44.f, 1.f, Hairline, 82.f);
-    Text(State.guided ? TEXT("01 / THE LEAKED SECRET / GUIDED") : TEXT("01 / THE LEAKED SECRET / STANDARD"), 310.f, 42.f, 15.f, Teal);
-    Text(Mode.GetMusicStatus(), 861.f, 43.f, 13.f, Muted);
-    Text(TEXT("Contain the incident. Make the next release safe."), 310.f, 69.f, 23.f, White);
+    // Anchor to the physical viewport top, including taller-than-16:9 windows.
+    // The wall's station title is part of navigation and must stay unobstructed.
+    const float Top = 12.f - Origin.Y / UIScale;
+    Box(28.f, Top, 1544.f, 62.f, Ink);
+    Rule(28.f, Top, 1544.f, Teal, 2.f);
+    Text(TEXT("SHIFT LEFT"), 44.f, Top + 10.f, 21.f, White);
+    Text(State.guided ? TEXT("THE LEAKED SECRET / GUIDED") : TEXT("THE LEAKED SECRET / STANDARD"),
+         44.f, Top + 37.f, 12.f, Teal);
     const FString LiveState = State.completed ? TEXT("RELEASE VALIDATED")
         : State.credentialRevoked ? TEXT("EXPOSED CREDENTIAL REVOKED") : TEXT("PRODUCTION CREDENTIAL EXPOSED");
-    Text(LiveState, 311.f, 108.f, 14.f,
+    Text(LiveState, 365.f, Top + 10.f, 17.f,
          State.credentialRevoked || State.completed ? Teal : Coral);
-
+    Text(Mode.GetMusicStatus(), 365.f, Top + 37.f, 12.f, Muted);
     const int32 Remaining = FMath::Max(State.budget - State.effortSpent, 0);
-    Box(1122.f, 42.f, 182.f, 88.f, Surface);
-    Text(TEXT("REPAIR BUDGET"), 1138.f, 51.f, 14.f, Muted);
-    Text(FString::Printf(TEXT("%d / %d"), Remaining, State.budget), 1138.f, 72.f, 27.f, White);
-    Text(TEXT("effort remaining"), 1138.f, 109.f, 13.f, Muted);
-    Box(1316.f, 42.f, 236.f, 88.f, Surface);
-    Text(TEXT("INCIDENT PRESSURE"), 1332.f, 51.f, 14.f, Muted);
-    Text(FString::Printf(TEXT("%d%%"), State.pressure), 1332.f, 72.f, 27.f,
+    Text(FString::Printf(TEXT("REPAIR BUDGET  %d / %d"), Remaining, State.budget),
+         1000.f, Top + 10.f, 17.f, White);
+    Text(FString::Printf(TEXT("PRESSURE  %d%%"), State.pressure), 1310.f, Top + 10.f, 17.f,
          State.pressure >= 65 ? Coral : White);
     const bool bClockPaused = !Mode.IsGameplayActive();
-    const FString ClockLabel = FString::Printf(TEXT("%.0fs exposed  /  %s"),
+    const FString ClockLabel = FString::Printf(TEXT("%.0fs exposed / %s"),
         static_cast<double>(State.exposedMilliseconds) / 1000.,
         bClockPaused ? TEXT("PAUSED") : State.credentialRevoked ? TEXT("CONTAINED") : TEXT("ACTIVE"));
-    Text(ClockLabel, 1332.f, 109.f, 13.f, bClockPaused ? Teal : Muted);
+    Text(ClockLabel, 1310.f, Top + 37.f, 12.f, bClockPaused ? Teal : Muted);
 }
 
 void ASLGameHUD::DrawPipeline(const ASLGameMode& Mode)
@@ -228,7 +224,10 @@ void ASLGameHUD::DrawPipeline(const ASLGameMode& Mode)
             Text(TEXT("SET"), X + 147.f, 832.f, 13.f, Teal);
         }
     }
-    Text(TEXT("A / D  MOVE"), 48.f, 817.f, 14.f, White);
+    Text(FString::Printf(TEXT("A / LEFT: %s"), Current > 0 ? Names[Current-1] : TEXT("END")),
+         48.f, 814.f, 13.f, White);
+    Text(FString::Printf(TEXT("D / RIGHT: %s"), Current < 4 ? Names[Current+1] : TEXT("END")),
+         48.f, 836.f, 13.f, White);
     Text(TEXT("E  CONNECT     F  PATCH!     Q  DOC     R  VALIDATE     ESC / H  HELP"),
          48.f, 859.f, 13.f, Muted);
     Text(TEXT("Choices: number keys or click"), 1316.f, 859.f, 13.f, Muted);

@@ -1,6 +1,9 @@
 #include "SLAutoplay.h"
 #include "SLGameMode.h"
 #include "SLDocChat.h"
+#include "SLDeliveryWorld.h"
+#include "Components/TextRenderComponent.h"
+#include "EngineUtils.h"
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
@@ -176,7 +179,51 @@ void ASLAutoplay::Build()
         Tap(EKeys::One, 1.4f);
     };
 
-    if (Scenario == TEXT("complete"))
+    if (Scenario == TEXT("layout"))
+    {
+        Tap(EKeys::One, 1.5f);
+        Expect(TEXT("rendered station signs match gameplay coordinates"), [this](const ASLGameMode&)
+        {
+            int32 Found = 0;
+            const TCHAR* Names[] = {TEXT("SOURCE"),TEXT("BUILD"),TEXT("TEST"),TEXT("STAGING"),TEXT("PRODUCTION")};
+            for (TActorIterator<ASLDeliveryWorld> It(GetWorld()); It; ++It)
+            {
+                TArray<UTextRenderComponent*> Signs;
+                It->GetComponents(Signs);
+                for (const auto* Sign : Signs)
+                    for (int32 Stage=0; Stage<5; ++Stage)
+                        if (Sign->Text.ToString() == Names[Stage])
+                        {
+                            ++Found;
+                            UE_LOG(LogSLAutoplay, Display, TEXT("SIGN %s world=%s"), Names[Stage], *Sign->GetComponentLocation().ToString());
+                            if (FMath::Abs(Sign->GetComponentLocation().X - StationX(Stage)) > 1.f) return false;
+                        }
+            }
+            return Found == 5;
+        });
+        Shot(TEXT("production-start"));
+        WalkTo(0);
+        Shot(TEXT("source-arrival"));
+        Hold(EKeys::Left, 2.f);
+        Wait(.5f);
+        Expect(TEXT("left endpoint is SOURCE and remains grounded"), [this](const ASLGameMode& M)
+        {
+            const FVector P = Player(this)->GetActorLocation();
+            return M.GetCurrentStageIndex() == 0 && P.X > 2900.f && P.Z > 90.f && P.Z < 115.f;
+        });
+        Shot(TEXT("left-limit-source"));
+        WalkTo(4);
+        Shot(TEXT("production-arrival"));
+        Hold(EKeys::Right, 2.f);
+        Wait(.5f);
+        Expect(TEXT("right endpoint is PRODUCTION and remains grounded"), [this](const ASLGameMode& M)
+        {
+            const FVector P = Player(this)->GetActorLocation();
+            return M.GetCurrentStageIndex() == 4 && P.X < -2900.f && P.Z > 90.f && P.Z < 115.f;
+        });
+        Shot(TEXT("right-limit-production"));
+    }
+    else if (Scenario == TEXT("complete"))
     {
         Tap(EKeys::One, 1.5f);
         Shot(TEXT("grid-production"));

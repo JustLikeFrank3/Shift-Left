@@ -17,7 +17,7 @@ import tempfile
 root = Path(sys.argv[1])
 engine = Path(sys.argv[2])
 scenarios = sys.argv[3:] or ['complete', 'wrong', 'budget', 'guided', 'pause', 'doc', 'quit']
-if any(s not in ('complete', 'wrong', 'budget', 'guided', 'pause', 'doc', 'doc-live', 'quit') for s in scenarios):
+if any(s not in ('complete', 'wrong', 'budget', 'guided', 'pause', 'doc', 'doc-live', 'layout', 'quit') for s in scenarios):
     raise SystemExit('Unknown playtest scenario')
 game = os.environ.get('SL_GAME')
 command = [game] if game else [str(engine / 'Engine/Binaries/Mac/UnrealEditor.app/Contents/MacOS/UnrealEditor'), str(root / 'ShiftLeft/ShiftLeft.uproject'), '/Game/Maps/DeliveryGrid', '-game']
@@ -32,7 +32,7 @@ with tempfile.TemporaryDirectory(prefix='shift-left-playtest-') as backup:
             log = logs / f'{scenario}.log'
             with log.open('w') as output:
                 try:
-                    result = subprocess.run(command + ['-windowed', '-ResX=1600', '-ResY=900', f'-SLAutoplay={scenario}', '-nosplash', '-stdout', '-FullStdOutLogOutput'], stdout=output, stderr=subprocess.STDOUT, timeout=900)
+                    result = subprocess.run(command + ['-windowed', f'-ResX={int(os.environ.get("SL_RES_X", 1600))}', f'-ResY={int(os.environ.get("SL_RES_Y", 900))}', f'-SLAutoplay={scenario}', '-nosplash', '-stdout', '-FullStdOutLogOutput'], stdout=output, stderr=subprocess.STDOUT, timeout=900)
                     code = result.returncode
                 except subprocess.TimeoutExpired:
                     code = 124
