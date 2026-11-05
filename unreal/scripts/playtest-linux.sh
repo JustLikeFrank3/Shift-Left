@@ -12,6 +12,12 @@ unreal_dir=$(CDPATH= cd -- "$script_dir/.." && pwd)
 project_file="$unreal_dir/ShiftLeft/ShiftLeft.uproject"
 log_dir="$unreal_dir/playtest"
 mkdir -p -- "$log_dir"
+# Editor/cook processes rewrite Config/*.ini (expanded defaults, an Android
+# file-server token). Restore the authored configuration when this script exits.
+config_dir="$unreal_dir/ShiftLeft/Config"
+config_snapshot=$(mktemp -d)
+cp -a -- "$config_dir/." "$config_snapshot/"
+trap 'rm -rf -- "$config_dir" && mkdir -p -- "$config_dir" && cp -a -- "$config_snapshot/." "$config_dir/" && rm -rf -- "$config_snapshot"' EXIT
 overall=0
 for scenario in $scenarios; do
   log="$log_dir/$scenario.log"

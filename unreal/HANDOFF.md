@@ -56,7 +56,7 @@ Close Unreal before an external C++ rebuild. Generated assets are real Unreal fi
 
 ## 4. First playtest
 
-PATCH should start beside PRODUCTION with DOC visible. Use A/D or arrows to move, Space to jump, E to connect, F for PATCH!, Q for the offline DOC guide, R to validate, M to toggle music, Escape for help, and 1/2/3 or the mouse to choose operations.
+PATCH should start beside PRODUCTION with DOC visible. Use A/D or arrows to move, Space to jump, E to connect, F for PATCH!, Q for the offline DOC guide, R to validate, M to toggle music, Escape or H for help (Escape stops Play-in-Editor), and 1/2/3 or the mouse to choose operations.
 
 Check these paths:
 
@@ -80,7 +80,30 @@ Output defaults to `unreal/build/Linux/`. Run the resulting launcher on the inte
 
 Preserve `unreal/build-unreal.log` or `unreal/package-unreal.log` plus `unreal/ShiftLeft/Saved/Logs/ShiftLeft.log`. Report the **first actual error**, engine version, Linux distribution, GPU/driver and the command you ran. Do not interpret a source preflight pass or a bootstrap success marker as proof of correct rendering.
 
-Validation already performed: 68 GCC checks for the portable model; source/config/import-input preflight; Bash and Python syntax checks; static review of native C++; Blender round trips for the original seven assets. Native compilation/import/play/packaging and the five articulated parts' final in-engine transforms remain unverified.
+Known issues seen so far:
+
+- UE 5.8 segfaults during editor shutdown after the bootstrap has saved everything. `build-linux.sh` accepts that exit only when the fresh success marker and map exist, and prints a warning.
+- The editor rewrites `Config/DefaultInput.ini` and `DefaultEngine.ini` (expanded defaults, an Android file-server token). The build, package and playtest scripts restore `Config/` when they finish; review `git diff unreal/ShiftLeft/Config` before committing after saving settings in the editor.
+- UAT stages with the first `env` on `PATH`. A sourceable `~/.local/bin/env` breaks staging with `Permission denied`; `package-linux.sh` puts `/usr/bin` first.
+- Unreal logs the audio "hardware device" as the first enumerated output, but SDL opens the system default (check the `Opening ... audio device` line).
+
+## Native verification results
+
+Recorded 2026-11-04 on Ubuntu 26.04 LTS, Ryzen 7 8845HS, NVIDIA RTX 5060 Ti 16 GB (driver 595.99.02, Vulkan SM6), 29.7 GB RAM, UE 5.8.0 (CL 55116800).
+
+| Check | Result |
+| --- | --- |
+| `test-core.sh` / `verify-source.py` | 68 checks pass / preflight passes |
+| `build-linux.sh` | `ShiftLeftEditor` compiles; 9 FBX meshes, 13 materials, the score and `DeliveryGrid` saved |
+| `package-linux.sh` | Development package built, 1.2 GB, `build/Linux/ShiftLeft.sh` |
+| `playtest-linux.sh`, editor `-game` | complete, wrong, budget, guided, pause: all PASS |
+| `playtest-linux.sh`, packaged | complete, wrong, budget, guided, pause: all PASS |
+
+Scenario outcomes (identical in both builds): **complete** contains for 0 effort, repairs at SOURCE for 3, validates with grade S and 0 mistakes. **wrong** packages the replacement at PRODUCTION (16 effort, pressure 25, exposure resumes), revokes and reissues, then validates at 19 effort with 1 mistake. **budget** spends 24/24, an unaffordable check changes nothing, and Escape > Retry restores 0/24 at PRODUCTION. **guided** survives 241 s of exposure at 0 pressure; standard fails at exactly 180.0 s and retry starts fresh. **pause** shows DOC stopping both the exposure clock and movement, and M stopping and restarting the score.
+
+Screenshots confirmed: PATCH and DOC face the camera with their faces readable; PATCH's articulated limbs swing and he turns three-quarters toward travel; Space jumps and the deck holds; terminals and racks face the corridor; PATCH! raises his arm, shows a rising callout and flashes mint (coral when the route re-exposes the replacement); HUD and panels are readable at 1600x900. Music played on the default output (Scarlett Solo USB). Rough frame rate from log timestamps: 70-110 fps at 1600x900 windowed, including screenshot stalls.
+
+Not verified: mouse clicks on panel choices; keys from a real OS keyboard (autoplay injects through Slate); anyone listening to the music; Play-in-Editor inside the editor viewport (tests used the editor binary with `-game`); fullscreen, other resolutions, gamepads; other GPUs or distributions; a Shipping configuration. Human balance and feel judgment is still needed.
 
 Only **The Leaked Secret** has native gameplay. Campaign JSON is reference data. Native DOC is a labeled offline guide; the browser's live text agent is not connected to native UI. Native music currently loops the original score with an M toggle; the browser's adaptive mixer and crossfade have not been ported.
 

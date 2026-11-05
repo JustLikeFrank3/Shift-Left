@@ -2,13 +2,13 @@
 
 This is the native Unreal Engine 5.8 port of **The Leaked Secret**. It contains C++ gameplay source, an independently tested incident simulation, original Blender/FBX art, and scripts to import the assets, create a map and package Linux builds.
 
-**Current verification:** the portable incident model passes 68 checks with GCC. The Unreal gameplay module, import automation, lighting, input, audio and packaging have not run in Unreal yet. This workspace has no Unreal Editor and only a 32 GB filesystem. There is no downloadable native executable yet.
+**Current verification (2026-11-04, UE 5.8.0, Ubuntu 26.04, RTX 5060 Ti):** the native module compiles, the bootstrap imports the art and score and saves the map, and a packaged Linux Development build (`build/Linux/ShiftLeft.sh`) launches and renders on Vulkan. Scripted in-engine playtests pass in both the editor's `-game` mode and the packaged build: the full incident (grade S), the wrong route and its recovery, the effort budget and retry, guided versus standard deadlines, paused reading time and the M music toggle. The portable model still passes its 68 GCC checks. See [HANDOFF.md](HANDOFF.md#native-verification-results) for what this does and does not cover. The package is built locally and not published.
 
 The browser checkpoint remains in the parent project. Its full campaign and live text DOC are separate from this native slice.
 
 ![PATCH and DOC in the original corridor art](ArtSource/preview.png)
 
-*Blender look development using the exported models. This is not an Unreal gameplay screenshot.*
+*Blender look development using the exported models. This is not an Unreal gameplay screenshot. In-engine captures are written to `ShiftLeft/Saved/Autoplay/` by the scripted playtest.*
 
 ## Install Unreal on Linux
 
@@ -76,7 +76,7 @@ PATCH begins beside the live production leak, with DOC floating nearby. The corr
 | R | Validate the incident |
 | M | Toggle the original score |
 | 1 / 2 / 3 or mouse | Choose an operation in a panel |
-| Escape | Close a panel or open help |
+| Escape / H | Close a panel or open help (H also works in Play-in-Editor, where Escape stops play) |
 
 The first panel explains the controls. Standard mode has a three-minute active exposure window; guided mode removes time-based failure. Reading terminal/help/DOC panels pauses that window. Revoking an exposed credential is free and stops its exploitation, so containment is accessible before longer investigation. Wrong routes can re-expose the replacement. Repairs draw from 24 effort; free investigation and containment never require leftward travel. Retry starts a fresh incident if pressure or poor spending makes the run unsalvageable.
 
@@ -90,7 +90,16 @@ After the editor build, import and in-editor playtest succeed:
 ./scripts/package-linux.sh "$HOME/Unreal/UE_5.8"
 ```
 
-The archive goes to `unreal/build/Linux/` by default. Test the resulting launcher from a terminal on the intended Linux hardware before sharing it. Packaging is currently unverified. A Linux package does not produce Windows or macOS executables.
+The archive goes to `unreal/build/Linux/` by default; launch it with `build/Linux/ShiftLeft.sh`. Packaging has been verified on one Ubuntu 26.04 / RTX 5060 Ti machine; test on other target hardware before sharing. A Linux package does not produce Windows or macOS executables.
+
+## Scripted playtest
+
+```bash
+./scripts/playtest-linux.sh "$HOME/Unreal/UE_5.8"                         # editor build, -game
+SL_GAME="$PWD/build/Linux/ShiftLeft.sh" ./scripts/playtest-linux.sh -     # packaged build
+```
+
+Each scenario (`complete`, `wrong`, `budget`, `guided`, `pause`) starts the game with `-SLAutoplay=<scenario>`, sends key events through Slate into the normal input bindings, saves in-engine screenshots and logs PASS/FAIL checks to `playtest/<scenario>.log`. A window opens; do not type into it while it runs. It does not replace a human playtest: it does not use the OS keyboard, the mouse, or listen to the audio.
 
 ## Source and verification
 
