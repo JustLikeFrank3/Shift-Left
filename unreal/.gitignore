@@ -1,0 +1,10 @@
+**/Binaries/
+**/DerivedDataCache/
+**/Intermediate/
+**/Saved/
+**/.vs/
+**/*.sln
+build/
+*.log
+*.blend1
+__pycache__/

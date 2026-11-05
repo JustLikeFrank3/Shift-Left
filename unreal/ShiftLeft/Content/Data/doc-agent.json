@@ -1,0 +1,10 @@
+{
+  "agentId": "agent_4201m6m66wkhf26vcv2f3p1n984s",
+  "available": true,
+  "textOnlyConfirmed": true,
+  "publicAgent": true,
+  "textOnlyOverrideAllowed": true,
+  "responseCompleteEvent": false,
+  "provider": "ElevenLabs",
+  "status": "Verified public access and per-session text-only override; full-response completion fallback."
+}

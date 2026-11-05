@@ -1,0 +1,86 @@
+{
+  "SM_PATCH": {
+    "dimensions_m": [
+      1.951,
+      0.911,
+      2.284
+    ],
+    "triangles": 58488,
+    "material_slots": 8,
+    "fbx_unit_scale_cm": 1.0,
+    "bytes": 1654300,
+    "status": "PASS"
+  },
+  "SM_DOC": {
+    "dimensions_m": [
+      1.247,
+      0.465,
+      1.04
+    ],
+    "triangles": 20928,
+    "material_slots": 10,
+    "fbx_unit_scale_cm": 1.0,
+    "bytes": 608316,
+    "status": "PASS"
+  },
+  "SM_ServerRack": {
+    "dimensions_m": [
+      1.157,
+      0.9424,
+      2.65
+    ],
+    "triangles": 77324,
+    "material_slots": 9,
+    "fbx_unit_scale_cm": 1.0,
+    "bytes": 2048892,
+    "status": "PASS"
+  },
+  "SM_RepairTerminal": {
+    "dimensions_m": [
+      1.05,
+      0.7945,
+      2.0
+    ],
+    "triangles": 57220,
+    "material_slots": 8,
+    "fbx_unit_scale_cm": 1.0,
+    "bytes": 1575148,
+    "status": "PASS"
+  },
+  "SM_CorridorFloor": {
+    "dimensions_m": [
+      4.0,
+      3.0,
+      0.341
+    ],
+    "triangles": 9040,
+    "material_slots": 5,
+    "fbx_unit_scale_cm": 1.0,
+    "bytes": 221068,
+    "status": "PASS"
+  },
+  "SM_CorridorWall": {
+    "dimensions_m": [
+      3.0,
+      0.643,
+      3.4
+    ],
+    "triangles": 19208,
+    "material_slots": 6,
+    "fbx_unit_scale_cm": 1.0,
+    "bytes": 550828,
+    "status": "PASS"
+  },
+  "SM_CorridorArch": {
+    "dimensions_m": [
+      7.96,
+      0.535,
+      4.955
+    ],
+    "triangles": 2524,
+    "material_slots": 5,
+    "fbx_unit_scale_cm": 1.0,
+    "bytes": 83692,
+    "status": "PASS"
+  }
+}

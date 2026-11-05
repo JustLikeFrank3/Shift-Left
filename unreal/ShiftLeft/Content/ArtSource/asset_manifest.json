@@ -1,0 +1,473 @@
+{
+  "project": "SHIFT LEFT \u2014 original art, 2026",
+  "generator": "generate_art.py / Blender 4.3.2",
+  "unit_convention": "Source meters; FBX applies unit scale 100 to mesh geometry, UnitScaleFactor=1 centimeter. Import uniform scale 1.0 in Unreal.",
+  "assets": {
+    "SM_PATCH_Body": {
+      "file": "SM_PATCH_Body.fbx",
+      "dimensions_m": [
+        1.48,
+        0.911,
+        1.884
+      ],
+      "vertices": 21810,
+      "polygons": 20765,
+      "materials": [
+        "M_Dark",
+        "M_Navy",
+        "M_Panel",
+        "M_Metal",
+        "M_White",
+        "M_Mint",
+        "M_Rubber",
+        "M_Cyan"
+      ],
+      "front": "-Y",
+      "up": "+Z",
+      "pivot_m": [
+        0,
+        0,
+        0
+      ],
+      "component_placement_cm": [
+        0,
+        0,
+        0
+      ]
+    },
+    "SM_PATCH_Arm_L": {
+      "file": "SM_PATCH_Arm_L.fbx",
+      "dimensions_m": [
+        0.608,
+        0.4,
+        0.817
+      ],
+      "vertices": 3520,
+      "polygons": 3668,
+      "materials": [
+        "M_Dark",
+        "M_White",
+        "M_Metal",
+        "M_Navy",
+        "M_Cyan"
+      ],
+      "front": "-Y",
+      "up": "+Z",
+      "pivot_m": [
+        -0.46,
+        0,
+        0.94
+      ],
+      "component_placement_cm": [
+        -46.0,
+        0,
+        94.0
+      ]
+    },
+    "SM_PATCH_Arm_R": {
+      "file": "SM_PATCH_Arm_R.fbx",
+      "dimensions_m": [
+        0.673,
+        0.36,
+        0.772
+      ],
+      "vertices": 3520,
+      "polygons": 3668,
+      "materials": [
+        "M_Dark",
+        "M_White",
+        "M_Metal",
+        "M_Navy",
+        "M_Cyan"
+      ],
+      "front": "-Y",
+      "up": "+Z",
+      "pivot_m": [
+        0.46,
+        0,
+        0.94
+      ],
+      "component_placement_cm": [
+        46.0,
+        0,
+        94.0
+      ]
+    },
+    "SM_PATCH_Leg_L": {
+      "file": "SM_PATCH_Leg_L.fbx",
+      "dimensions_m": [
+        0.34,
+        0.523,
+        0.505
+      ],
+      "vertices": 1176,
+      "polygons": 1150,
+      "materials": [
+        "M_Rubber",
+        "M_White",
+        "M_Cyan",
+        "M_Metal",
+        "M_Navy"
+      ],
+      "front": "-Y",
+      "up": "+Z",
+      "pivot_m": [
+        -0.23,
+        0,
+        0.54
+      ],
+      "component_placement_cm": [
+        -23.0,
+        0,
+        54.0
+      ]
+    },
+    "SM_PATCH_Leg_R": {
+      "file": "SM_PATCH_Leg_R.fbx",
+      "dimensions_m": [
+        0.34,
+        0.523,
+        0.505
+      ],
+      "vertices": 1176,
+      "polygons": 1150,
+      "materials": [
+        "M_Rubber",
+        "M_White",
+        "M_Cyan",
+        "M_Metal",
+        "M_Navy"
+      ],
+      "front": "-Y",
+      "up": "+Z",
+      "pivot_m": [
+        0.23,
+        0,
+        0.54
+      ],
+      "component_placement_cm": [
+        23.0,
+        0,
+        54.0
+      ]
+    },
+    "SM_PATCH": {
+      "file": "SM_PATCH.fbx",
+      "dimensions_m": [
+        1.951,
+        0.911,
+        2.284
+      ],
+      "vertices": 31202,
+      "polygons": 30401,
+      "materials": [
+        "M_Rubber",
+        "M_White",
+        "M_Cyan",
+        "M_Metal",
+        "M_Navy",
+        "M_Dark",
+        "M_Panel",
+        "M_Mint"
+      ],
+      "front": "-Y",
+      "up": "+Z",
+      "pivot_m": [
+        0,
+        0,
+        0
+      ]
+    },
+    "SM_DOC": {
+      "file": "SM_DOC.fbx",
+      "dimensions_m": [
+        1.247,
+        0.465,
+        1.04
+      ],
+      "vertices": 11170,
+      "polygons": 10854,
+      "materials": [
+        "M_Paper",
+        "M_White",
+        "M_Navy",
+        "M_Metal",
+        "M_Mint",
+        "M_Ink",
+        "M_Cyan",
+        "M_Dark",
+        "M_Panel",
+        "M_Coral"
+      ],
+      "front": "-Y",
+      "up": "+Z",
+      "pivot_m": [
+        0,
+        0,
+        0
+      ]
+    },
+    "SM_ServerRack": {
+      "file": "SM_ServerRack.fbx",
+      "dimensions_m": [
+        1.157,
+        0.9424,
+        2.65
+      ],
+      "vertices": 42194,
+      "polygons": 40856,
+      "materials": [
+        "M_Rubber",
+        "M_Navy",
+        "M_Dark",
+        "M_Metal",
+        "M_Panel",
+        "M_Mint",
+        "M_Amber",
+        "M_White",
+        "M_Cyan"
+      ],
+      "front": "-Y",
+      "up": "+Z",
+      "pivot_m": [
+        0,
+        0,
+        0
+      ]
+    },
+    "SM_RepairTerminal": {
+      "file": "SM_RepairTerminal.fbx",
+      "dimensions_m": [
+        1.05,
+        0.7945,
+        2.0
+      ],
+      "vertices": 32858,
+      "polygons": 30601,
+      "materials": [
+        "M_Dark",
+        "M_Navy",
+        "M_Metal",
+        "M_Cyan",
+        "M_Panel",
+        "M_Mint",
+        "M_White",
+        "M_Rubber"
+      ],
+      "front": "-Y",
+      "up": "+Z",
+      "pivot_m": [
+        0,
+        0,
+        0
+      ]
+    },
+    "SM_CorridorFloor": {
+      "file": "SM_CorridorFloor.fbx",
+      "dimensions_m": [
+        4.0,
+        3.0,
+        0.341
+      ],
+      "vertices": 4608,
+      "polygons": 4696,
+      "materials": [
+        "M_Navy",
+        "M_Floor",
+        "M_Dark",
+        "M_Metal",
+        "M_Cyan"
+      ],
+      "front": "-Y",
+      "up": "+Z",
+      "pivot_m": [
+        0,
+        0,
+        0
+      ]
+    },
+    "SM_CorridorWall": {
+      "file": "SM_CorridorWall.fbx",
+      "dimensions_m": [
+        3.0,
+        0.643,
+        3.4
+      ],
+      "vertices": 10796,
+      "polygons": 10237,
+      "materials": [
+        "M_Navy",
+        "M_Panel",
+        "M_Dark",
+        "M_Metal",
+        "M_Cyan",
+        "M_White"
+      ],
+      "front": "-Y",
+      "up": "+Z",
+      "pivot_m": [
+        0,
+        0,
+        0
+      ]
+    },
+    "SM_CorridorArch": {
+      "file": "SM_CorridorArch.fbx",
+      "dimensions_m": [
+        7.96,
+        0.535,
+        4.955
+      ],
+      "vertices": 1308,
+      "polygons": 1314,
+      "materials": [
+        "M_Metal",
+        "M_Navy",
+        "M_Cyan",
+        "M_Dark",
+        "M_White"
+      ],
+      "front": "-Y",
+      "up": "+Z",
+      "pivot_m": [
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  "palette": {
+    "M_Navy": {
+      "base_color": [
+        0.017999999225139618,
+        0.07900000363588333,
+        0.11900000274181366
+      ],
+      "metallic": 0.6000000238418579,
+      "roughness": 0.2800000011920929,
+      "emission_strength": 0.0
+    },
+    "M_Panel": {
+      "base_color": [
+        0.04600000008940697,
+        0.14499999582767487,
+        0.17800000309944153
+      ],
+      "metallic": 0.5,
+      "roughness": 0.3400000035762787,
+      "emission_strength": 0.0
+    },
+    "M_Metal": {
+      "base_color": [
+        0.23000000417232513,
+        0.36000001430511475,
+        0.4000000059604645
+      ],
+      "metallic": 0.7799999713897705,
+      "roughness": 0.27000001072883606,
+      "emission_strength": 0.0
+    },
+    "M_Dark": {
+      "base_color": [
+        0.004000000189989805,
+        0.013000000268220901,
+        0.023000000044703484
+      ],
+      "metallic": 0.30000001192092896,
+      "roughness": 0.30000001192092896,
+      "emission_strength": 0.0
+    },
+    "M_White": {
+      "base_color": [
+        0.7300000190734863,
+        0.8700000047683716,
+        0.8600000143051147
+      ],
+      "metallic": 0.18000000715255737,
+      "roughness": 0.28999999165534973,
+      "emission_strength": 0.0
+    },
+    "M_Mint": {
+      "base_color": [
+        0.15000000596046448,
+        0.949999988079071,
+        0.6399999856948853
+      ],
+      "metallic": 0.20000000298023224,
+      "roughness": 0.2199999988079071,
+      "emission_strength": 3.5999999046325684
+    },
+    "M_Cyan": {
+      "base_color": [
+        0.02500000037252903,
+        0.6399999856948853,
+        0.8700000047683716
+      ],
+      "metallic": 0.3499999940395355,
+      "roughness": 0.25,
+      "emission_strength": 2.4000000953674316
+    },
+    "M_Coral": {
+      "base_color": [
+        0.9800000190734863,
+        0.15000000596046448,
+        0.08500000089406967
+      ],
+      "metallic": 0.20000000298023224,
+      "roughness": 0.30000001192092896,
+      "emission_strength": 2.299999952316284
+    },
+    "M_Amber": {
+      "base_color": [
+        1.0,
+        0.5199999809265137,
+        0.10000000149011612
+      ],
+      "metallic": 0.20000000298023224,
+      "roughness": 0.3199999928474426,
+      "emission_strength": 1.2999999523162842
+    },
+    "M_Paper": {
+      "base_color": [
+        0.6600000262260437,
+        0.8199999928474426,
+        0.7699999809265137
+      ],
+      "metallic": 0.07999999821186066,
+      "roughness": 0.6499999761581421,
+      "emission_strength": 0.0
+    },
+    "M_Ink": {
+      "base_color": [
+        0.019999999552965164,
+        0.1899999976158142,
+        0.1899999976158142
+      ],
+      "metallic": 0.10000000149011612,
+      "roughness": 0.550000011920929,
+      "emission_strength": 0.0
+    },
+    "M_Rubber": {
+      "base_color": [
+        0.00800000037997961,
+        0.019999999552965164,
+        0.02500000037252903
+      ],
+      "metallic": 0.0,
+      "roughness": 0.6499999761581421,
+      "emission_strength": 0.0
+    },
+    "M_Floor": {
+      "base_color": [
+        0.017000000923871994,
+        0.03799999877810478,
+        0.04699999839067459
+      ],
+      "metallic": 0.6800000071525574,
+      "roughness": 0.33000001311302185,
+      "emission_strength": 0.0
+    }
+  },
+  "provenance": "All geometry, typography, procedural surfacing and layout created in this generator. No downloaded meshes, textures, fonts or third-party media.",
+  "preview": "Blender look-development concept; not an Unreal Engine screenshot."
+}

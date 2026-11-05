@@ -2,7 +2,9 @@
 
 **Fix tomorrow's bugs yesterday.**
 
-SHIFT LEFT is a browser-based, side-scrolling DevSecOps adventure for GitHub Game Off 2026. Players learn by investigating failures, changing simulated pipeline controls, and validating consequences.
+SHIFT LEFT is a side-scrolling DevSecOps adventure for GitHub Game Off 2026. Players learn by investigating failures, changing simulated pipeline controls, and validating consequences.
+
+**Current direction: downloadable Unreal Engine game for Linux.** The native project, original 3D art, installation steps and build scripts are in [unreal/README.md](unreal/README.md). That project is an uncompiled vertical slice of The Leaked Secret; it is not yet a packaged game. The existing playable browser version remains available while the native version is built. The browser instructions below describe that version.
 
 ## Audience
 

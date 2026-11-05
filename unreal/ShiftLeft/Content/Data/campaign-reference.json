@@ -1,0 +1,1533 @@
+[
+  {
+    "id": 2,
+    "title": "The Red Build",
+    "voice": "LEGACY / ENGINEER",
+    "brief": "The release failed before tests even started. SHIP suggests skipping the checks. Find the actual failure, repair the artifact, then investigate what the tests reveal.",
+    "objective": "Repair the build and the discount regression without bypassing tests.",
+    "hint": "Read the build log first. Fix the module path and rerun. Once the build passes, inspect the test report and repair the boundary condition.",
+    "learning": "Build failures and test failures are different signals. Fix the cause, keep required tests enabled, and rerun the same checks before release.",
+    "evidence": [
+      {
+        "id": "build-log",
+        "title": "Compiler output",
+        "stage": "BUILD",
+        "before": "BUILD FAILED\ncheckout.ts:2 Cannot resolve './Price'\nRepository contains: price.ts\nTEST: not started",
+        "after": "BUILD PASSED\nArtifact checkout@2 created from repaired source.",
+        "when": "module-fixed"
+      },
+      {
+        "id": "test-report",
+        "title": "Discount test report",
+        "stage": "TEST",
+        "before": "No artifact available. Repair BUILD and run the pipeline to execute tests.",
+        "after": "TEST FAILED\nprice(100, discount=0)\nExpected: 100 / Received: 0\nif (!discount) return 0;",
+        "when": "tests-discovered"
+      },
+      {
+        "id": "code",
+        "title": "Checkout source",
+        "stage": "SOURCE",
+        "before": "import {price} from \"./Price\";\n// Filesystem paths are case sensitive.\nif (!discount) return 0;",
+        "after": "import {price} from \"./price\";\nif (discount === undefined) return total;\nreturn total * (1 - discount);",
+        "when": "logic-fixed"
+      }
+    ],
+    "actions": [
+      {
+        "id": "fix-module",
+        "label": "Repair module path",
+        "detail": "Match the import to price.ts; preserve case-sensitive builds.",
+        "effects": {
+          "module-fixed": true
+        },
+        "requires": [],
+        "evidence": ["build-log"],
+        "warning": false,
+        "kind": "fix"
+      },
+      {
+        "id": "fix-logic",
+        "label": "Patch zero-discount handling",
+        "detail": "Preserve the total when discount is zero; keep the regression test.",
+        "effects": {
+          "logic-fixed": true
+        },
+        "requires": ["tests-discovered"],
+        "evidence": ["test-report"],
+        "warning": false,
+        "kind": "fix"
+      },
+      {
+        "id": "skip-tests",
+        "label": "Bypass required tests",
+        "detail": "Skip the suite to get a green indicator. This leaves the behavior unverified.",
+        "effects": {
+          "tests-bypassed": true
+        },
+        "requires": [],
+        "evidence": [],
+        "warning": true,
+        "kind": "operation"
+      },
+      {
+        "id": "restore-tests",
+        "label": "Require the test suite",
+        "detail": "Restore the release gate so untested artifacts cannot ship.",
+        "effects": {
+          "tests-bypassed": false
+        },
+        "requires": [],
+        "evidence": [],
+        "warning": false,
+        "kind": "fix"
+      }
+    ],
+    "gates": [
+      {
+        "stage": "BUILD",
+        "flag": "module-fixed",
+        "message": "Compiler cannot resolve ./Price. Inspect the build log."
+      },
+      {
+        "stage": "TEST",
+        "flag": "logic-fixed",
+        "message": "Discount regression failed. Inspect the test report revealed by this run."
+      },
+      {
+        "stage": "TEST",
+        "flag": "!tests-bypassed",
+        "message": "Required tests were bypassed. Restore the test gate before release."
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "title": "The Leaked Secret",
+    "voice": "OPS / RELIABILITY",
+    "brief": "A fictional service credential was committed to a public repository. Deleting a line will not revoke the credential. Contain the exposure, investigate usage and history, then repair delivery.",
+    "objective": "Revoke the exposed credential, assess exposure, and migrate the application to a fresh managed secret.",
+    "hint": "Revoke first. Inspect audit and history evidence. Provision a replacement in the vault, switch the source to runtime injection, and add a secrets check.",
+    "learning": "Revocation contains credential exposure. Rotation restores service safely. Removing hardcoding and scanning help prevention; rewriting history alone does not revoke a leaked credential.",
+    "evidence": [
+      {
+        "id": "secret",
+        "title": "Repository finding",
+        "stage": "SOURCE",
+        "before": "config.ts\nSERVICE_TOKEN = \"SYNTHETIC_DEMO_ONLY\"\nPublic commit: demo-a12\nStatus: exposed / active",
+        "after": "Old credential: REVOKED\nHistorical copies cannot authenticate.",
+        "when": "revoked"
+      },
+      {
+        "id": "audit",
+        "title": "Credential usage audit",
+        "stage": "PROD",
+        "before": "Synthetic audit\nUnknown caller used old token after commit.\nNo customer data exists in this sandbox.\nAssess scope before closing the incident.",
+        "after": "Scope assessed: demo endpoint only.\nOld-token access rejected after revocation.",
+        "when": "assessed"
+      },
+      {
+        "id": "history",
+        "title": "Repository history",
+        "stage": "SOURCE",
+        "before": "Current file and 3 older commits contain the demo token.\nA current-file deletion will leave historical copies.",
+        "after": "Historical exposure documented.\nOld token remains revoked; retained evidence is synthetic.",
+        "when": "history-reviewed"
+      },
+      {
+        "id": "runtime",
+        "title": "Runtime configuration",
+        "stage": "STAGE",
+        "before": "Application reads hardcoded token.\nVault: no replacement binding.",
+        "after": "Application reads SERVICE_TOKEN from runtime secret binding.\nNo credential value is included in the artifact.",
+        "when": "injected"
+      }
+    ],
+    "actions": [
+      {
+        "id": "revoke",
+        "label": "Revoke exposed credential",
+        "detail": "Invalidate the exposed token at the simulated provider.",
+        "effects": {
+          "revoked": true
+        },
+        "requires": [],
+        "evidence": ["secret"],
+        "warning": false,
+        "kind": "operation"
+      },
+      {
+        "id": "assess",
+        "label": "Assess credential usage",
+        "detail": "Review synthetic usage, scope, and incident evidence.",
+        "effects": {
+          "assessed": true
+        },
+        "requires": ["revoked"],
+        "evidence": ["audit"],
+        "warning": false,
+        "kind": "operation"
+      },
+      {
+        "id": "history",
+        "label": "Assess repository history",
+        "detail": "Document historical copies and cleanup scope; preserve incident evidence.",
+        "effects": {
+          "history-reviewed": true
+        },
+        "requires": ["revoked"],
+        "evidence": ["history"],
+        "warning": false,
+        "kind": "operation"
+      },
+      {
+        "id": "rotate",
+        "label": "Provision replacement in vault",
+        "detail": "Create a fresh simulated credential through the secret store.",
+        "effects": {
+          "rotated": true
+        },
+        "requires": ["revoked"],
+        "evidence": [],
+        "warning": false,
+        "kind": "operation"
+      },
+      {
+        "id": "inject",
+        "label": "Replace hardcoding with secret binding",
+        "detail": "Load the replacement at runtime instead of embedding it.",
+        "effects": {
+          "injected": true
+        },
+        "requires": ["rotated"],
+        "evidence": ["runtime"],
+        "warning": false,
+        "kind": "fix"
+      },
+      {
+        "id": "scan",
+        "label": "Enable repository secrets check",
+        "detail": "Scan current changes and history for synthetic exposure.",
+        "effects": {
+          "secret-check": true
+        },
+        "requires": ["history-reviewed"],
+        "evidence": [],
+        "warning": false,
+        "kind": "fix"
+      },
+      {
+        "id": "delete",
+        "label": "Only delete the current token line",
+        "detail": "Remove the current line. The exposed token and older commits are unaffected.",
+        "effects": {
+          "line-deleted": true
+        },
+        "requires": [],
+        "evidence": [],
+        "warning": true,
+        "kind": "operation"
+      }
+    ],
+    "gates": [
+      {
+        "stage": "SOURCE",
+        "flag": "revoked",
+        "message": "Contain the exposure: revoke the old credential."
+      },
+      {
+        "stage": "SOURCE",
+        "flag": "assessed",
+        "message": "Review the credential usage audit."
+      },
+      {
+        "stage": "SOURCE",
+        "flag": "history-reviewed",
+        "message": "Assess the historical copies."
+      },
+      {
+        "stage": "BUILD",
+        "flag": "injected",
+        "message": "The artifact must use a managed runtime secret, not a hardcoded credential."
+      },
+      {
+        "stage": "TEST",
+        "flag": "secret-check",
+        "message": "Add a repository secrets check before release."
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "title": "Shift Left!",
+    "voice": "SENTINEL / SECURITY",
+    "brief": "The last release found problems only in staging. Move detection earlier and enforce it. Prove that a synthetic bad change is blocked while a clean change can still ship.",
+    "objective": "Configure early checks and required gates, then exercise both bad and clean changes.",
+    "hint": "Install commit and CI secret checks, require them for promotion, and run the synthetic bad change. After it is blocked, switch to the clean change and rerun.",
+    "learning": "Early checks improve feedback. Local hooks can be bypassed; enforced CI gates provide an independent boundary. Test both rejection of unsafe changes and acceptance of valid work.",
+    "evidence": [
+      {
+        "id": "policy",
+        "title": "Delivery policy",
+        "stage": "SOURCE",
+        "before": "Local hook: absent\nCI secret scan: absent\nRequired promotion checks: none",
+        "after": "Local hook and CI are configured.\nPromotion must require the CI result independently.",
+        "when": "ci"
+      },
+      {
+        "id": "fixture",
+        "title": "Synthetic change fixtures",
+        "stage": "TEST",
+        "before": "BAD: contains SYNTHETIC_DEMO_ONLY\nCLEAN: runtime secret reference, no token literal\nBoth must exercise the same enforced CI gate.",
+        "after": "",
+        "when": ""
+      },
+      {
+        "id": "gate",
+        "title": "Promotion audit",
+        "stage": "STAGE",
+        "before": "No blocked-change proof recorded.",
+        "after": "BAD fixture rejected by required early CI check.\nNow validate the clean fixture without disabling controls.",
+        "when": "bad-blocked"
+      }
+    ],
+    "actions": [
+      {
+        "id": "hook",
+        "label": "Install local secrets hook",
+        "detail": "Give contributors fast feedback before a commit.",
+        "effects": {
+          "hook": true
+        },
+        "requires": [],
+        "evidence": ["policy"],
+        "warning": false,
+        "kind": "fix"
+      },
+      {
+        "id": "ci",
+        "label": "Add CI secrets scan before build",
+        "detail": "Run the check independently of local developer settings.",
+        "effects": {
+          "ci": true
+        },
+        "requires": [],
+        "evidence": ["policy"],
+        "warning": false,
+        "kind": "fix"
+      },
+      {
+        "id": "enforce",
+        "label": "Require CI check for promotion",
+        "detail": "Block release when the check fails or has not run.",
+        "effects": {
+          "enforced": true
+        },
+        "requires": ["ci"],
+        "evidence": [],
+        "warning": false,
+        "kind": "fix"
+      },
+      {
+        "id": "bad",
+        "label": "Load synthetic bad change",
+        "detail": "Exercise rejection with a fake exposed credential.",
+        "effects": {
+          "bad-fixture": true
+        },
+        "requires": [],
+        "evidence": ["fixture"],
+        "warning": false,
+        "kind": "operation"
+      },
+      {
+        "id": "clean",
+        "label": "Load clean change",
+        "detail": "Exercise acceptance using runtime secret references.",
+        "effects": {
+          "bad-fixture": false
+        },
+        "requires": [],
+        "evidence": ["fixture"],
+        "warning": false,
+        "kind": "operation"
+      },
+      {
+        "id": "disable",
+        "label": "Disable promotion enforcement",
+        "detail": "A green-looking run can still carry an unsafe change.",
+        "effects": {
+          "enforced": false
+        },
+        "requires": [],
+        "evidence": [],
+        "warning": true,
+        "kind": "operation"
+      }
+    ],
+    "gates": [
+      {
+        "stage": "SOURCE",
+        "flag": "hook",
+        "message": "Install the early local feedback check."
+      },
+      {
+        "stage": "SOURCE",
+        "flag": "ci",
+        "message": "Add an independent CI secrets scan."
+      },
+      {
+        "stage": "SOURCE",
+        "flag": "enforced",
+        "message": "Enforce the CI result at promotion."
+      },
+      {
+        "stage": "TEST",
+        "flag": "bad-blocked",
+        "message": "First prove the bad change is rejected by running it through the required check."
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "title": "Scan Wars",
+    "voice": "SENTINEL / SECURITY",
+    "brief": "Two scanners disagree about a demo search endpoint. Static analysis finds an injection path and a fixture string. Dynamic analysis needs a running staging target. Use the evidence to fix the real finding without suppressing everything.",
+    "objective": "Run SAST and DAST, patch the injection, and document the fixture finding using evidence.",
+    "hint": "Run SAST first and inspect findings. Patch query construction and document the non-executable fixture. Deploy the isolated staging target, then run DAST against it.",
+    "learning": "SAST inspects source; DAST exercises a running target. Neither proves complete security. Triage findings with evidence, narrowly document false positives, and rerun scans after changes.",
+    "evidence": [
+      {
+        "id": "sast",
+        "title": "Static analysis findings",
+        "stage": "SOURCE",
+        "before": "SAST has not run.",
+        "after": "F-01 HIGH / search.ts:12\nquery(\"SELECT * FROM items WHERE name = '\" + input + \"'\")\nF-02 / fixtures/example.txt\nA SQL-like string in a non-executable test fixture.",
+        "when": "sast"
+      },
+      {
+        "id": "fixture",
+        "title": "Fixture reachability",
+        "stage": "TEST",
+        "before": "fixtures/example.txt is a test-only text fixture.\nNot imported by application code.\nExcluded from the production artifact.",
+        "after": "",
+        "when": ""
+      },
+      {
+        "id": "dast",
+        "title": "Dynamic analysis report",
+        "stage": "STAGE",
+        "before": "DAST has not run against a staging target.",
+        "after": "DAST: synthetic injection request returned unintended rows.\nRecheck after patching the source.",
+        "when": "dast"
+      },
+      {
+        "id": "query",
+        "title": "Search implementation",
+        "stage": "SOURCE",
+        "before": "SQL text concatenates user input.",
+        "after": "query(\"SELECT * FROM items WHERE name = ?\", [input]);\nInput is bound as data, not query syntax.",
+        "when": "parameterized"
+      }
+    ],
+    "actions": [
+      {
+        "id": "sast",
+        "label": "Run SAST",
+        "detail": "Analyze the current source and reveal static findings.",
+        "effects": {
+          "sast": true
+        },
+        "requires": [],
+        "evidence": [],
+        "warning": false,
+        "kind": "operation"
+      },
+      {
+        "id": "patch",
+        "label": "Parameterize search query",
+        "detail": "Bind input as data; invalidate scans and require the patched source to be redeployed to staging.",
+        "effects": {
+          "parameterized": true,
+          "sast": false,
+          "dast": false,
+          "staging": false
+        },
+        "requires": ["sast"],
+        "evidence": ["sast"],
+        "warning": false,
+        "kind": "fix"
+      },
+      {
+        "id": "triage",
+        "label": "Document fixture false positive",
+        "detail": "Record test-only reachability evidence for F-02 without suppressing the real injection finding.",
+        "effects": {
+          "triaged": true
+        },
+        "requires": ["sast"],
+        "evidence": ["fixture"],
+        "warning": false,
+        "kind": "fix"
+      },
+      {
+        "id": "stage",
+        "label": "Deploy isolated staging target",
+        "detail": "Deploy the current source to a synthetic preproduction target; rerun dynamic testing after deployment.",
+        "effects": {
+          "staging": true,
+          "dast": false
+        },
+        "requires": [],
+        "evidence": [],
+        "warning": false,
+        "kind": "operation"
+      },
+      {
+        "id": "dast",
+        "label": "Run DAST against staging",
+        "detail": "Exercise the running staging target with a synthetic request.",
+        "effects": {
+          "dast": true
+        },
+        "requires": ["staging"],
+        "evidence": [],
+        "warning": false,
+        "kind": "operation"
+      },
+      {
+        "id": "suppress",
+        "label": "Suppress all scanner findings",
+        "detail": "Hide alerts without changing the vulnerable implementation.",
+        "effects": {
+          "suppressed": true
+        },
+        "requires": [],
+        "evidence": [],
+        "warning": true,
+        "kind": "operation"
+      },
+      {
+        "id": "restore",
+        "label": "Restore scanner reporting",
+        "detail": "Remove the blanket suppression.",
+        "effects": {
+          "suppressed": false
+        },
+        "requires": [],
+        "evidence": [],
+        "warning": false,
+        "kind": "fix"
+      }
+    ],
+    "gates": [
+      {
+        "stage": "SOURCE",
+        "flag": "sast",
+        "message": "Run SAST on the current source."
+      },
+      {
+        "stage": "SOURCE",
+        "flag": "!suppressed",
+        "message": "Remove blanket finding suppression."
+      },
+      {
+        "stage": "BUILD",
+        "flag": "parameterized",
+        "message": "Fix the query construction using bound parameters."
+      },
+      {
+        "stage": "TEST",
+        "flag": "triaged",
+        "message": "Document the fixture finding with reachability evidence."
+      },
+      {
+        "stage": "STAGE",
+        "flag": "dast",
+        "message": "Run DAST against the isolated staging target."
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "title": "Dependency Hell",
+    "voice": "LEGACY / ENGINEER",
+    "brief": "The vulnerable package is not in your direct dependencies. It arrives through a renderer. Trace the dependency graph, choose a compatible fix, and regenerate the lockfile before testing the artifact.",
+    "objective": "Repair the transitive dependency, regenerate the lockfile, and verify behavior and inventory.",
+    "hint": "Generate an SBOM and run SCA. Upgrade the parent renderer to the compatible patched release, regenerate the lockfile, then run regression tests and SCA again.",
+    "learning": "An SBOM inventories components; SCA associates components with vulnerability information. Fix transitive dependencies through compatible parent upgrades, and verify the resolved lockfile and behavior. Packages and advisories here are fictional.",
+    "evidence": [
+      {
+        "id": "sbom",
+        "title": "Component inventory",
+        "stage": "BUILD",
+        "before": "SBOM not generated.",
+        "after": "demo-shop \u2192 demo-renderer@1.2 \u2192 demo-parser@2.0\ndemo-parser is transitive, not a direct dependency.",
+        "when": "sbom"
+      },
+      {
+        "id": "sca",
+        "title": "Dependency advisory",
+        "stage": "TEST",
+        "before": "SCA has not run.",
+        "after": "SYNTHETIC-2026-001\ndemo-parser <2.1: unsafe template parsing\ndemo-renderer 1.3 resolves parser 2.1 with compatible API.\ndemo-renderer 2.0 changes the rendering API.",
+        "when": "sca"
+      },
+      {
+        "id": "lock",
+        "title": "Resolved lockfile",
+        "stage": "BUILD",
+        "before": "demo-renderer 1.2 / demo-parser 2.0\nChanging package metadata alone does not update this resolution.",
+        "after": "demo-renderer 1.3 / demo-parser 2.1\nCompatible patched dependency tree is locked.",
+        "when": "locked"
+      },
+      {
+        "id": "regression",
+        "title": "Render regression report",
+        "stage": "TEST",
+        "before": "Regression tests have not run on the resolved patched tree.",
+        "after": "Rendering, escaping and checkout smoke checks passed\non the regenerated compatible dependency tree.",
+        "when": "regression"
+      }
+    ],
+    "actions": [
+      {
+        "id": "sbom",
+        "label": "Generate SBOM",
+        "detail": "Inventory the installed direct and transitive components.",
+        "effects": {
+          "sbom": true
+        },
+        "requires": [],
+        "evidence": [],
+        "warning": false,
+        "kind": "operation"
+      },
+      {
+        "id": "sca",
+        "label": "Run software composition analysis",
+        "detail": "Compare the resolved dependency inventory to synthetic advisories.",
+        "effects": {
+          "sca": true
+        },
+        "requires": ["sbom"],
+        "evidence": [],
+        "warning": false,
+        "kind": "operation"
+      },
+      {
+        "id": "upgrade",
+        "label": "Upgrade renderer to compatible 1.3",
+        "detail": "Update the parent dependency that brings the patched parser.",
+        "effects": {
+          "upgraded": true,
+          "breaking": false,
+          "locked": false,
+          "sca": false,
+          "regression": false
+        },
+        "requires": ["sca"],
+        "evidence": ["sca"],
+        "warning": false,
+        "kind": "fix"
+      },
+      {
+        "id": "major",
+        "label": "Force renderer 2.0",
+        "detail": "Jump to an incompatible major API without migrating callers.",
+        "effects": {
+          "upgraded": true,
+          "breaking": true,
+          "locked": false,
+          "sca": false,
+          "regression": false
+        },
+        "requires": ["sca"],
+        "evidence": [],
+        "warning": true,
+        "kind": "fix"
+      },
+      {
+        "id": "lock",
+        "label": "Regenerate lockfile",
+        "detail": "Resolve and pin the chosen dependency tree; invalidate the old inventory.",
+        "effects": {
+          "locked": true,
+          "sbom": false,
+          "sca": false,
+          "regression": false
+        },
+        "requires": ["upgraded"],
+        "evidence": [],
+        "warning": false,
+        "kind": "fix"
+      },
+      {
+        "id": "regression",
+        "label": "Run rendering regression tests",
+        "detail": "Verify behavior on the resolved dependency tree.",
+        "effects": {
+          "regression": true
+        },
+        "requires": ["locked"],
+        "evidence": [],
+        "warning": false,
+        "kind": "operation"
+      },
+      {
+        "id": "repair",
+        "label": "Restore compatible renderer 1.3",
+        "detail": "Recover from the incompatible major; regenerate the lockfile again.",
+        "effects": {
+          "breaking": false,
+          "locked": false,
+          "sbom": false,
+          "sca": false,
+          "regression": false
+        },
+        "requires": ["upgraded"],
+        "evidence": [],
+        "warning": false,
+        "kind": "fix"
+      }
+    ],
+    "gates": [
+      {
+        "stage": "BUILD",
+        "flag": "locked",
+        "message": "Regenerate the lockfile for the upgraded dependency tree."
+      },
+      {
+        "stage": "BUILD",
+        "flag": "sbom",
+        "message": "Generate a fresh SBOM after lockfile resolution."
+      },
+      {
+        "stage": "TEST",
+        "flag": "!breaking",
+        "message": "Renderer 2.0 breaks the existing API. Restore the compatible release."
+      },
+      {
+        "stage": "TEST",
+        "flag": "regression",
+        "message": "Run rendering regression tests on the patched dependency tree."
+      },
+      {
+        "stage": "TEST",
+        "flag": "sca",
+        "message": "Run SCA on the resolved patched inventory."
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "title": "Permission Denied",
+    "voice": "OPS / RELIABILITY",
+    "brief": "The reporting worker cannot read its own artifacts. A wildcard administrator role would unblock it, but also expose every environment. Investigate the denied operation and scope a service identity to the actual workload.",
+    "objective": "Restore report delivery with a scoped service identity and prove forbidden operations remain denied.",
+    "hint": "Read the access denial and identity policy. Bind the reporting identity, grant read on its own artifact prefix, and test both allowed and forbidden operations.",
+    "learning": "Least privilege grants the actions and resources a workload needs. Validate positive access and negative boundaries; a successful request alone does not prove a policy is safe.",
+    "evidence": [
+      {
+        "id": "denial",
+        "title": "Access denial",
+        "stage": "BUILD",
+        "before": "principal: shared-dev\naction: artifact:Read\nresource: demo/reports/daily.csv\nresult: DENIED",
+        "after": "",
+        "when": ""
+      },
+      {
+        "id": "policy",
+        "title": "Identity policy",
+        "stage": "SOURCE",
+        "before": "Reporting worker uses shared-dev identity.\nRequired: artifact:Read on demo/reports/*\nForbidden: artifact:Write and all production secrets.",
+        "after": "Service identity: reporting-worker\nPolicy changes must still be tested against allowed and forbidden operations.",
+        "when": "identity"
+      },
+      {
+        "id": "probe",
+        "title": "Permission probe matrix",
+        "stage": "TEST",
+        "before": "Probe A: read demo/reports/daily.csv \u2192 must ALLOW\nProbe B: write demo/reports/daily.csv \u2192 must DENY\nProbe C: read prod/secrets/* \u2192 must DENY",
+        "after": "Probe matrix executed against the current policy.",
+        "when": "probed"
+      }
+    ],
+    "actions": [
+      {
+        "id": "identity",
+        "label": "Bind dedicated reporting identity",
+        "detail": "Stop using a shared developer principal.",
+        "effects": {
+          "identity": true
+        },
+        "requires": [],
+        "evidence": ["denial", "policy"],
+        "warning": false,
+        "kind": "fix"
+      },
+      {
+        "id": "scope",
+        "label": "Grant scoped artifact read",
+        "detail": "Allow only artifact:Read on demo/reports/*.",
+        "effects": {
+          "scoped": true,
+          "admin": false,
+          "probed": false
+        },
+        "requires": ["identity"],
+        "evidence": ["policy"],
+        "warning": false,
+        "kind": "fix"
+      },
+      {
+        "id": "admin",
+        "label": "Grant wildcard administrator",
+        "detail": "Allow all actions and resources, including production secrets.",
+        "effects": {
+          "scoped": true,
+          "admin": true,
+          "probed": false
+        },
+        "requires": [],
+        "evidence": [],
+        "warning": true,
+        "kind": "fix"
+      },
+      {
+        "id": "probe",
+        "label": "Test allowed and forbidden access",
+        "detail": "Exercise the complete probe matrix on the current identity policy.",
+        "effects": {
+          "probed": true
+        },
+        "requires": ["identity", "scoped"],
+        "evidence": ["probe"],
+        "warning": false,
+        "kind": "operation"
+      }
+    ],
+    "gates": [
+      {
+        "stage": "SOURCE",
+        "flag": "identity",
+        "message": "Bind a dedicated workload identity."
+      },
+      {
+        "stage": "BUILD",
+        "flag": "scoped",
+        "message": "Grant the reporting worker its required artifact read."
+      },
+      {
+        "stage": "TEST",
+        "flag": "!admin",
+        "message": "Negative probe FAILED: wildcard role allows writes and production secret access."
+      },
+      {
+        "stage": "TEST",
+        "flag": "probed",
+        "message": "Exercise allowed reads and forbidden operations on the current policy."
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "title": "The Green Lie",
+    "voice": "SENTINEL / SECURITY",
+    "brief": "A pull request shows a green icon, yet its security workflow never ran. A path filter skipped it and promotion only checked the job name. Make skipped or missing evidence block the release.",
+    "objective": "Repair workflow coverage and required-check enforcement, and test a deliberately skipped run.",
+    "hint": "Inspect the workflow and promotion policy. Remove the path gap, require the completed check, then try a skipped fixture before the normal fixture.",
+    "learning": "A skipped job is not evidence of a passing control. Required checks need coverage, fail-closed handling, and protection from bypass. Verify missing or skipped results as well as passing results.",
+    "evidence": [
+      {
+        "id": "workflow",
+        "title": "Workflow definition",
+        "stage": "SOURCE",
+        "before": "security-scan:\n  paths: [\"src/legacy/**\"]\nChanged file: src/api/search.ts\nScan result: SKIPPED",
+        "after": "",
+        "when": ""
+      },
+      {
+        "id": "promotion",
+        "title": "Promotion policy",
+        "stage": "STAGE",
+        "before": "Policy accepts a named job even when its conclusion is skipped.\nBranch bypass: enabled\nNo completed-check requirement.",
+        "after": "",
+        "when": ""
+      },
+      {
+        "id": "fixture",
+        "title": "Check result fixtures",
+        "stage": "TEST",
+        "before": "SKIPPED: job exists, no scan executed\nNORMAL: current commit scan completed successfully\nPromotion must reject the first and accept the second.",
+        "after": "",
+        "when": ""
+      }
+    ],
+    "actions": [
+      {
+        "id": "coverage",
+        "label": "Cover all application changes",
+        "detail": "Remove the narrow path filter from the security workflow.",
+        "effects": {
+          "coverage": true
+        },
+        "requires": [],
+        "evidence": ["workflow"],
+        "warning": false,
+        "kind": "fix"
+      },
+      {
+        "id": "required",
+        "label": "Require completed successful security check",
+        "detail": "Treat missing, pending and skipped results as failures to promote.",
+        "effects": {
+          "required": true
+        },
+        "requires": [],
+        "evidence": ["promotion"],
+        "warning": false,
+        "kind": "fix"
+      },
+      {
+        "id": "protect",
+        "label": "Disable branch bypass",
+        "detail": "Apply the gate consistently to the demo release branch.",
+        "effects": {
+          "protected": true
+        },
+        "requires": [],
+        "evidence": ["promotion"],
+        "warning": false,
+        "kind": "fix"
+      },
+      {
+        "id": "skip",
+        "label": "Load skipped-check fixture",
+        "detail": "Exercise a named job with no completed scan.",
+        "effects": {
+          "skipped-fixture": true
+        },
+        "requires": [],
+        "evidence": ["fixture"],
+        "warning": false,
+        "kind": "operation"
+      },
+      {
+        "id": "normal",
+        "label": "Load completed-check fixture",
+        "detail": "Use a completed successful check on the current commit.",
+        "effects": {
+          "skipped-fixture": false
+        },
+        "requires": [],
+        "evidence": ["fixture"],
+        "warning": false,
+        "kind": "operation"
+      },
+      {
+        "id": "override",
+        "label": "Override promotion gate",
+        "detail": "Let releases through without successful check evidence.",
+        "effects": {
+          "required": false
+        },
+        "requires": [],
+        "evidence": [],
+        "warning": true,
+        "kind": "fix"
+      }
+    ],
+    "gates": [
+      {
+        "stage": "SOURCE",
+        "flag": "coverage",
+        "message": "The security workflow still skips application changes."
+      },
+      {
+        "stage": "SOURCE",
+        "flag": "required",
+        "message": "Require completed successful scan evidence."
+      },
+      {
+        "stage": "SOURCE",
+        "flag": "protected",
+        "message": "Disable the branch bypass."
+      },
+      {
+        "stage": "TEST",
+        "flag": "skip-blocked",
+        "message": "Prove that a skipped check cannot promote before testing the normal fixture."
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "title": "The Compromised Build",
+    "voice": "SENTINEL / SUPPLY CHAIN",
+    "brief": "The artifact is signed, but its build originated from an unexpected repository. The signing identity alone does not establish trust. Quarantine the output and verify a rebuilt artifact against the intended source and builder.",
+    "objective": "Quarantine the suspect artifact and rebuild with pinned inputs, then verify source, builder and digest.",
+    "hint": "Inspect provenance first. Quarantine before rebuilding. Pin the trusted builder and inputs, rebuild from reviewed source, and verify the entire provenance tuple.",
+    "learning": "A signature authenticates a signing identity; it does not guarantee trusted source or behavior. Check provenance against policy: intended source, reviewed commit, approved builder and artifact digest.",
+    "evidence": [
+      {
+        "id": "provenance",
+        "title": "Artifact provenance",
+        "stage": "BUILD",
+        "before": "signature: cryptographically valid (simulated)\nsource: demo/untrusted-mirror\nexpected source: demo/shop\nbuilder: ad-hoc-runner\ndigest: demo-suspect-001",
+        "after": "source: demo/shop @ reviewed-commit\nbuilder: approved-builder / pinned inputs\ndigest: demo-rebuilt-002",
+        "when": "rebuilt"
+      },
+      {
+        "id": "policy",
+        "title": "Supply chain policy",
+        "stage": "SOURCE",
+        "before": "Accept only demo/shop, reviewed-commit, approved-builder.\nCompare attested digest to promoted artifact.\nDo not approve based only on signature presence.",
+        "after": "",
+        "when": ""
+      }
+    ],
+    "actions": [
+      {
+        "id": "quarantine",
+        "label": "Quarantine suspect artifact",
+        "detail": "Prevent the suspect output from being promoted; retain its provenance.",
+        "effects": {
+          "quarantined": true
+        },
+        "requires": [],
+        "evidence": ["provenance"],
+        "warning": false,
+        "kind": "operation"
+      },
+      {
+        "id": "pin",
+        "label": "Pin approved builder and inputs",
+        "detail": "Replace unreviewed mutable build inputs.",
+        "effects": {
+          "pinned": true
+        },
+        "requires": ["quarantined"],
+        "evidence": ["policy"],
+        "warning": false,
+        "kind": "fix"
+      },
+      {
+        "id": "rebuild",
+        "label": "Rebuild from reviewed source",
+        "detail": "Produce a new artifact with provenance from the approved builder.",
+        "effects": {
+          "rebuilt": true,
+          "verified": false
+        },
+        "requires": ["pinned", "quarantined"],
+        "evidence": [],
+        "warning": false,
+        "kind": "fix"
+      },
+      {
+        "id": "verify",
+        "label": "Verify provenance against promotion policy",
+        "detail": "Compare source, commit, builder and artifact digest.",
+        "effects": {
+          "verified": true
+        },
+        "requires": ["rebuilt"],
+        "evidence": ["provenance", "policy"],
+        "warning": false,
+        "kind": "operation"
+      },
+      {
+        "id": "signature",
+        "label": "Trust signature alone",
+        "detail": "Accept an authentic signature without evaluating source or builder.",
+        "effects": {
+          "signature-only": true
+        },
+        "requires": [],
+        "evidence": [],
+        "warning": true,
+        "kind": "operation"
+      }
+    ],
+    "gates": [
+      {
+        "stage": "SOURCE",
+        "flag": "quarantined",
+        "message": "Quarantine the suspect output before release work."
+      },
+      {
+        "stage": "BUILD",
+        "flag": "rebuilt",
+        "message": "Rebuild from reviewed source with approved pinned inputs."
+      },
+      {
+        "stage": "STAGE",
+        "flag": "verified",
+        "message": "Verify the rebuilt artifact provenance against promotion policy."
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "title": "Zero-Day Friday",
+    "voice": "OPS / INCIDENT RESPONSE",
+    "brief": "Two findings arrive at once. One is critical in an unreachable demo tool; another is high severity in a public upload path. Determine exposure and contain the reachable route before preparing a tested permanent fix.",
+    "objective": "Prioritize the reachable public upload flaw, contain it, then deploy a tested patch and remove the temporary restriction safely.",
+    "hint": "Read reachability evidence. Restrict uploads first, record the lower-exposure finding for follow-up, patch the public route and test it. Only reopen uploads after the patch passes.",
+    "learning": "Severity is one input to prioritization. Reachability, exposure and impact determine urgency. Temporary containment buys time but needs a tested permanent remediation and explicit removal.",
+    "evidence": [
+      {
+        "id": "exposure",
+        "title": "Reachability assessment",
+        "stage": "PROD",
+        "before": "F-A CRITICAL: demo-doc-builder; development-only, not shipped\nF-B HIGH: demo-upload; public unauthenticated route\nSynthetic request reproduces F-B in production-like demo.",
+        "after": "",
+        "when": ""
+      },
+      {
+        "id": "patch",
+        "title": "Upload patch plan",
+        "stage": "SOURCE",
+        "before": "F-B accepts unbounded archive paths.\nFix: enforce destination containment and reject traversal.\nRegression: normal upload passes; ../escape is rejected.",
+        "after": "",
+        "when": ""
+      },
+      {
+        "id": "followup",
+        "title": "Lower-exposure finding",
+        "stage": "TEST",
+        "before": "F-A still needs remediation.\nTrack owner and due date; reassess if build-tool exposure changes.",
+        "after": "",
+        "when": ""
+      }
+    ],
+    "actions": [
+      {
+        "id": "contain",
+        "label": "Restrict public uploads",
+        "detail": "Temporarily hold the exposed route while preserving other service functions.",
+        "effects": {
+          "contained": true,
+          "reopened": false
+        },
+        "requires": [],
+        "evidence": ["exposure"],
+        "warning": false,
+        "kind": "operation"
+      },
+      {
+        "id": "track",
+        "label": "Assign lower-exposure follow-up",
+        "detail": "Document a demo owner, due date and exposure reassessment trigger for F-A.",
+        "effects": {
+          "tracked": true
+        },
+        "requires": [],
+        "evidence": ["followup"],
+        "warning": false,
+        "kind": "operation"
+      },
+      {
+        "id": "patch",
+        "label": "Patch archive path containment",
+        "detail": "Enforce the destination boundary in the public upload handler.",
+        "effects": {
+          "patched": true,
+          "tested": false
+        },
+        "requires": ["contained"],
+        "evidence": ["patch"],
+        "warning": false,
+        "kind": "fix"
+      },
+      {
+        "id": "test",
+        "label": "Run upload regression and exploit checks",
+        "detail": "Prove normal uploads work and traversal requests are rejected.",
+        "effects": {
+          "tested": true
+        },
+        "requires": ["patched"],
+        "evidence": [],
+        "warning": false,
+        "kind": "operation"
+      },
+      {
+        "id": "reopen",
+        "label": "Reopen the upload route",
+        "detail": "Remove temporary restriction after the permanent fix passes checks.",
+        "effects": {
+          "reopened": true
+        },
+        "requires": ["tested"],
+        "evidence": [],
+        "warning": false,
+        "kind": "operation"
+      },
+      {
+        "id": "severity",
+        "label": "Only patch the highest severity tool",
+        "detail": "Fix F-A while leaving the public exploitable route exposed.",
+        "effects": {
+          "tool-patched": true
+        },
+        "requires": [],
+        "evidence": [],
+        "warning": true,
+        "kind": "operation"
+      }
+    ],
+    "gates": [
+      {
+        "stage": "SOURCE",
+        "flag": "contained",
+        "message": "Contain the reachable public upload flaw first."
+      },
+      {
+        "stage": "SOURCE",
+        "flag": "tracked",
+        "message": "Track the lower-exposure finding rather than ignoring it."
+      },
+      {
+        "stage": "BUILD",
+        "flag": "patched",
+        "message": "Apply permanent archive path containment."
+      },
+      {
+        "stage": "TEST",
+        "flag": "tested",
+        "message": "Verify legitimate uploads and traversal rejection."
+      },
+      {
+        "stage": "PROD",
+        "flag": "reopened",
+        "message": "Restore upload availability after the tested patch."
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "title": "Incident Commander",
+    "voice": "OPS / INCIDENT COMMAND",
+    "brief": "The newest demo release is serving corrupted responses. Preserve evidence, contain the release and recover a known-good artifact. Restoring availability is valid containment; do not keep a harmful release live just to investigate it.",
+    "objective": "Contain the incident, preserve evidence, recover the verified release and validate service health before closure.",
+    "hint": "Rollback can happen immediately. Capture the synthetic incident evidence, verify a known-good artifact, restore it, fix the faulty configuration and run health checks before closure.",
+    "learning": "Containment and recovery are legitimate first responses. Preserve evidence in parallel, restore a known-good state, validate behavior and add a regression gate before closing the incident.",
+    "evidence": [
+      {
+        "id": "incident",
+        "title": "Incident timeline",
+        "stage": "PROD",
+        "before": "12:01 demo release v11\n12:02 response corruption observed\n12:03 synthetic error rate 42%\nLast known-good: v10 / verified digest demo-good-010",
+        "after": "",
+        "when": ""
+      },
+      {
+        "id": "config",
+        "title": "Release configuration diff",
+        "stage": "SOURCE",
+        "before": "v11: response_transform = unsafe-fast-path\nv10: response_transform = validated\nMissing regression: response integrity.",
+        "after": "",
+        "when": ""
+      },
+      {
+        "id": "recovery",
+        "title": "Recovery procedure",
+        "stage": "STAGE",
+        "before": "Accept only known-good v10 digest demo-good-010.\nSmoke checks: response integrity, availability, error rate.\nDo not close based only on a restarted process.",
+        "after": "",
+        "when": ""
+      }
+    ],
+    "actions": [
+      {
+        "id": "rollback",
+        "label": "Contain with rollback",
+        "detail": "Route away from the harmful release immediately; preserve v11 for investigation.",
+        "effects": {
+          "contained": true
+        },
+        "requires": [],
+        "evidence": [],
+        "warning": false,
+        "kind": "operation"
+      },
+      {
+        "id": "capture",
+        "label": "Preserve incident evidence",
+        "detail": "Retain synthetic logs, timeline and artifact identifiers.",
+        "effects": {
+          "evidence-preserved": true
+        },
+        "requires": [],
+        "evidence": ["incident"],
+        "warning": false,
+        "kind": "operation"
+      },
+      {
+        "id": "verify",
+        "label": "Verify known-good artifact",
+        "detail": "Compare v10 identity and digest with the recovery procedure.",
+        "effects": {
+          "known-good": true
+        },
+        "requires": [],
+        "evidence": ["recovery"],
+        "warning": false,
+        "kind": "operation"
+      },
+      {
+        "id": "restore",
+        "label": "Restore verified v10",
+        "detail": "Recover service using the verified known-good artifact.",
+        "effects": {
+          "restored": true,
+          "healthy": false
+        },
+        "requires": ["contained", "known-good"],
+        "evidence": [],
+        "warning": false,
+        "kind": "operation"
+      },
+      {
+        "id": "fix",
+        "label": "Restore validated response transform",
+        "detail": "Remove the faulty optimization and add a response-integrity regression gate.",
+        "effects": {
+          "root-fixed": true,
+          "healthy": false
+        },
+        "requires": ["evidence-preserved"],
+        "evidence": ["config"],
+        "warning": false,
+        "kind": "fix"
+      },
+      {
+        "id": "health",
+        "label": "Validate recovery health",
+        "detail": "Check response integrity, availability and error rate in the recovered state.",
+        "effects": {
+          "healthy": true
+        },
+        "requires": ["restored", "root-fixed"],
+        "evidence": [],
+        "warning": false,
+        "kind": "operation"
+      },
+      {
+        "id": "restart",
+        "label": "Restart without containment",
+        "detail": "Restart the same harmful release without changing routing or configuration.",
+        "effects": {
+          "restarted": true
+        },
+        "requires": [],
+        "evidence": [],
+        "warning": true,
+        "kind": "operation"
+      }
+    ],
+    "gates": [
+      {
+        "stage": "SOURCE",
+        "flag": "contained",
+        "message": "Contain the harmful release; a restart alone is insufficient."
+      },
+      {
+        "stage": "SOURCE",
+        "flag": "evidence-preserved",
+        "message": "Retain synthetic incident evidence."
+      },
+      {
+        "stage": "BUILD",
+        "flag": "restored",
+        "message": "Restore a verified known-good artifact."
+      },
+      {
+        "stage": "TEST",
+        "flag": "root-fixed",
+        "message": "Repair the configuration and add a response-integrity gate."
+      },
+      {
+        "stage": "PROD",
+        "flag": "healthy",
+        "message": "Validate the recovered service before closing the incident."
+      }
+    ]
+  },
+  {
+    "id": 12,
+    "title": "Technical Debt",
+    "voice": "PATCH / FINAL RELEASE",
+    "brief": "TECH DEBT is the accumulation of shortcuts: exposed credentials, untested releases, drifting dependencies and unverified recovery. Rebuild the delivery system so the next release stays healthy under pressure.",
+    "objective": "Retire four systemic shortcuts, rehearse an unsafe release, then deliver the clean release with recovery ready.",
+    "hint": "Inspect the debt ledger. Replace shared secrets, enforce tests, pin patched dependencies and rehearse rollback. Require these controls, test an unsafe fixture, then ship the clean fixture.",
+    "learning": "Durable improvement combines preventive controls, detection, remediation and recovery. A clean release is stronger evidence when the same system also blocks unsafe work and can recover from failure.",
+    "evidence": [
+      {
+        "id": "ledger",
+        "title": "Technical debt ledger",
+        "stage": "SOURCE",
+        "before": "Shared hardcoded credential: active\nTest promotion gate: optional\nDependency resolution: drifting\nRollback procedure: untested\nUnsafe release fixture exercises all four shortcuts.",
+        "after": "",
+        "when": ""
+      },
+      {
+        "id": "contract",
+        "title": "Release acceptance contract",
+        "stage": "TEST",
+        "before": "BAD: fake exposed token, failing tests, old parser, unknown recovery digest\nCLEAN: runtime binding, passing regressions, patched lockfile, verified rollback\nRequired: reject BAD and accept CLEAN without bypassing controls.",
+        "after": "",
+        "when": ""
+      }
+    ],
+    "actions": [
+      {
+        "id": "revoke",
+        "label": "Contain shared credential exposure",
+        "detail": "Revoke the exposed shared credential immediately; containment is free.",
+        "effects": {
+          "revoked": true
+        },
+        "requires": [],
+        "evidence": [],
+        "warning": false,
+        "kind": "operation"
+      },
+      {
+        "id": "secrets",
+        "label": "Retire hardcoded secret configuration",
+        "detail": "Replace hardcoding with a managed runtime binding after revocation.",
+        "effects": {
+          "secrets": true
+        },
+        "requires": ["revoked"],
+        "evidence": ["ledger"],
+        "warning": false,
+        "kind": "fix"
+      },
+      {
+        "id": "tests",
+        "label": "Require regression tests",
+        "detail": "Reject untested behavior changes before promotion.",
+        "effects": {
+          "tests": true
+        },
+        "requires": [],
+        "evidence": ["ledger"],
+        "warning": false,
+        "kind": "fix"
+      },
+      {
+        "id": "dependencies",
+        "label": "Pin patched dependency tree",
+        "detail": "Use the reviewed patched lockfile and record component inventory.",
+        "effects": {
+          "dependencies": true
+        },
+        "requires": [],
+        "evidence": ["ledger"],
+        "warning": false,
+        "kind": "fix"
+      },
+      {
+        "id": "recovery",
+        "label": "Rehearse verified rollback",
+        "detail": "Exercise known-good recovery and health checks.",
+        "effects": {
+          "recovery": true
+        },
+        "requires": [],
+        "evidence": ["ledger"],
+        "warning": false,
+        "kind": "operation"
+      },
+      {
+        "id": "enforce",
+        "label": "Enforce release acceptance contract",
+        "detail": "Require security, behavior, inventory and recovery evidence.",
+        "effects": {
+          "enforced": true
+        },
+        "requires": ["secrets", "tests", "dependencies", "recovery"],
+        "evidence": ["contract"],
+        "warning": false,
+        "kind": "fix"
+      },
+      {
+        "id": "bad",
+        "label": "Load unsafe release fixture",
+        "detail": "Stress the controls with synthetic unsafe delivery evidence.",
+        "effects": {
+          "debt-fixture": true
+        },
+        "requires": [],
+        "evidence": ["contract"],
+        "warning": false,
+        "kind": "operation"
+      },
+      {
+        "id": "clean",
+        "label": "Load clean release fixture",
+        "detail": "Deliver valid work without removing any protective gate.",
+        "effects": {
+          "debt-fixture": false
+        },
+        "requires": [],
+        "evidence": ["contract"],
+        "warning": false,
+        "kind": "operation"
+      },
+      {
+        "id": "shortcut",
+        "label": "Ship under deadline bypass",
+        "detail": "Disable acceptance enforcement to make the release look ready.",
+        "effects": {
+          "enforced": false
+        },
+        "requires": [],
+        "evidence": [],
+        "warning": true,
+        "kind": "operation"
+      }
+    ],
+    "gates": [
+      {
+        "stage": "SOURCE",
+        "flag": "revoked",
+        "message": "Contain the shared credential exposure before repairing its configuration."
+      },
+      {
+        "stage": "SOURCE",
+        "flag": "secrets",
+        "message": "Retire the shared exposed credential."
+      },
+      {
+        "stage": "BUILD",
+        "flag": "dependencies",
+        "message": "Pin and inventory the patched component tree."
+      },
+      {
+        "stage": "TEST",
+        "flag": "tests",
+        "message": "Require behavior regression checks."
+      },
+      {
+        "stage": "STAGE",
+        "flag": "recovery",
+        "message": "Rehearse known-good recovery."
+      },
+      {
+        "stage": "STAGE",
+        "flag": "enforced",
+        "message": "Enforce the release acceptance contract."
+      },
+      {
+        "stage": "PROD",
+        "flag": "debt-blocked",
+        "message": "Prove the unsafe release is rejected, then deliver the clean release."
+      }
+    ]
+  }
+]
