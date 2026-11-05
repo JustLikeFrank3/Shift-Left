@@ -85,7 +85,16 @@ Known issues seen so far:
 - UE 5.8 segfaults during editor shutdown after the bootstrap has saved everything. `build-linux.sh` accepts that exit only when the fresh success marker and map exist, and prints a warning.
 - The editor rewrites `Config/DefaultInput.ini` and `DefaultEngine.ini` (expanded defaults, an Android file-server token). The build, package and playtest scripts restore `Config/` when they finish; review `git diff unreal/ShiftLeft/Config` before committing after saving settings in the editor.
 - UAT stages with the first `env` on `PATH`. A sourceable `~/.local/bin/env` breaks staging with `Permission denied`; `package-linux.sh` puts `/usr/bin` first.
+- In one manual packaged run the game recreated its Vulkan swapchain about 220 times in bursts over 14 seconds (log `LogVulkanRHI: Creating new VK swapchain`, 10-bit `A2B10G10R10`, mailbox). Scripted runs created it once or twice. The cause is unconfirmed; window resizing, moving or focus changes under GNOME Wayland are the first suspects. Check for visible stutter.
 - Unreal logs the audio "hardware device" as the first enumerated output, but SDL opens the system default (check the `Opening ... audio device` line).
+
+## Committed generated content and other platforms
+
+`ShiftLeft/Content/Art`, `Audio` and `Maps` are committed: the 9 imported meshes, 13 materials, the score and `DeliveryGrid`, exactly as used by the verified Linux package (imported by UE 5.8.0 on 2026-11-04). A fresh checkout can open, play and package without rerunning the bootstrap. Rerun `build-linux.sh` only to reimport changed FBX/WAV sources; it backs up `Content/` to `Saved/ContentBackups/` first.
+
+Native code turns imported meshes 180 degrees at runtime (`SLPatchCharacter.cpp` `LoadArt`, `SLDeliveryWorld.cpp` `Rack`/`Terminal`). Do not also rotate them at import, or they will face away again.
+
+**macOS has not been attempted.** A Mac build needs a Mac with Xcode and UE 5.8 for macOS; Linux cannot produce it. The C++, content and `-SLAutoplay` harness are platform-neutral, but every script in `scripts/` is Linux-specific (paths under `Engine/Binaries/Linux`, `BatchFiles/Linux`, the `/usr/bin` PATH fix). Expected Mac equivalents, unverified: `Engine/Build/BatchFiles/Mac/Build.sh ShiftLeftEditor Mac Development <uproject> -WaitMutex`, then `Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -project=<uproject> -platform=Mac -clientconfig=Development -build -cook -stage -pak -archive -archivedirectory=<dir> -map=/Game/Maps/DeliveryGrid`. `DefaultEngine.ini` only sets Linux RHIs, so a Mac build uses the engine's Metal defaults. Record actual Mac results the same way as the Linux table below.
 
 ## Native verification results
 

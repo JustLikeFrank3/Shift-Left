@@ -56,7 +56,7 @@ python3 ./scripts/verify-source.py
 "$HOME/Unreal/UE_5.8/Engine/Binaries/Linux/UnrealEditor" "$PWD/ShiftLeft/ShiftLeft.uproject"
 ```
 
-The build script first compiles `ShiftLeftEditor`, then runs the editor's Python bootstrap. The bootstrap imports the FBX meshes and music, creates their materials and saves `/Game/Maps/DeliveryGrid`. Generated `.uasset` and `.umap` files require Unreal; they are not counterfeit text placeholders. Inspect the generated map, then press **Play**. Generated content is reproducible from the source assets and bootstrap.
+The build script first compiles `ShiftLeftEditor`, then runs the editor's Python bootstrap. The bootstrap imports the FBX meshes and music, creates their materials and saves `/Game/Maps/DeliveryGrid`. The generated `.uasset`/`.umap` files are committed, so a fresh checkout can open and package without the bootstrap; rerun it only after changing the FBX or WAV sources. Open the map, then press **Play**.
 
 The scripts stop on missing prerequisites or a failed import. Their presence does not establish that this project builds: the first actual Unreal compile can reveal API, import, shader or runtime issues that the portable checks cannot catch. If it fails, keep the compiler/import log so that those errors can be fixed.
 

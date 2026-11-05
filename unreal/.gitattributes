@@ -1,0 +1,3 @@
+# Unreal packages are binary; never diff, merge or normalise line endings.
+*.uasset binary
+*.umap binary
