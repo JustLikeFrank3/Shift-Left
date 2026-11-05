@@ -85,7 +85,8 @@ Known issues seen so far:
 - UE 5.8 segfaults during editor shutdown after the bootstrap has saved everything. `build-linux.sh` accepts that exit only when the fresh success marker and map exist, and prints a warning.
 - The editor rewrites `Config/DefaultInput.ini` and `DefaultEngine.ini` (expanded defaults, an Android file-server token). The build, package and playtest scripts restore `Config/` when they finish; review `git diff unreal/ShiftLeft/Config` before committing after saving settings in the editor.
 - UAT stages with the first `env` on `PATH`. A sourceable `~/.local/bin/env` breaks staging with `Permission denied`; `package-linux.sh` puts `/usr/bin` first.
-- In one manual packaged run the game recreated its Vulkan swapchain about 220 times in bursts over 14 seconds (log `LogVulkanRHI: Creating new VK swapchain`, 10-bit `A2B10G10R10`, mailbox). Scripted runs created it once or twice. The cause is unconfirmed; window resizing, moving or focus changes under GNOME Wayland are the first suspects. Check for visible stutter.
+- Dragging the window recreates the Vulkan swapchain every frame (`LogVulkanRHI: Creating new VK swapchain`, about 220 times in 14 seconds in one manual run) and stutters while the window moves. The player confirmed it happened only while moving the window; play is unaffected.
+- There is no in-game Quit yet; close the window, press Alt+F4, or use the console (`` ` `` then `quit`).
 - Unreal logs the audio "hardware device" as the first enumerated output, but SDL opens the system default (check the `Opening ... audio device` line).
 
 ## Committed generated content and other platforms
