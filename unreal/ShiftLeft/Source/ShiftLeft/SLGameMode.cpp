@@ -5,7 +5,7 @@
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "GameFramework/PlayerController.h"
-#include "GameFramework/MovementComponent.h"
+#include "GameFramework/PawnMovementComponent.h"
 #include "Components/AudioComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
@@ -39,9 +39,7 @@ ASLGameMode::ASLGameMode()
 void ASLGameMode::BeginPlay()
 {
     Super::BeginPlay();
-    bool bHasWorld = false;
-    for (TActorIterator<ASLDeliveryWorld> It(GetWorld()); It; ++It) { bHasWorld = true; break; }
-    if (!bHasWorld) GetWorld()->SpawnActor<ASLDeliveryWorld>();
+    if (!TActorIterator<ASLDeliveryWorld>(GetWorld())) GetWorld()->SpawnActor<ASLDeliveryWorld>();
     Score->SetSound(LoadObject<USoundBase>(nullptr, TEXT("/Game/Audio/SignalInTheDark.SignalInTheDark")));
     if (APawn* Pawn = UGameplayStatics::GetPlayerPawn(this, 0))
         Pawn->SetActorLocation(FVector(2220.f, 0.f, 120.f), false, nullptr, ETeleportType::TeleportPhysics);

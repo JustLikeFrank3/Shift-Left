@@ -21,10 +21,15 @@ if [ -d "$content_dir/Maps" ] || [ -d "$content_dir/Art" ]; then
   printf 'Backed up existing generated content to %s before regenerating it.\n' "$backup_dir"
 fi
 rm -f -- "$success_marker"
-"$editor" "$project_file" /Engine/Maps/Entry -unattended -nop4 -nosplash -NullRHI -stdout -FullStdOutLogOutput -ExecutePythonScript="$script_dir/bootstrap_editor.py"
+editor_status=0
+"$editor" "$project_file" /Engine/Maps/Entry -unattended -nop4 -nosplash -NullRHI -stdout -FullStdOutLogOutput -ExecutePythonScript="$script_dir/bootstrap_editor.py" || editor_status=$?
 if [ ! -f "$success_marker" ] || [ ! -f "$unreal_dir/ShiftLeft/Content/Maps/DeliveryGrid.umap" ]; then
   printf '%s\n' 'BLOCKED: editor bootstrap did not finish. Inspect ShiftLeft/Saved/Logs/ShiftLeft.log.'
   exit 2
+fi
+if [ "$editor_status" -ne 0 ]; then
+  # UE 5.8 on Linux can crash during module teardown after every asset is saved.
+  printf 'WARNING: the editor exited with status %s after writing the success marker and map.\n' "$editor_status"
 fi
 printf '%s\n' 'Native module compiled and art/map bootstrap finished. Launch the editor to inspect the result:'
 printf '%s "%s"\n' "$engine_dir/Engine/Binaries/Linux/UnrealEditor" "$project_file"
