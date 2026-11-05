@@ -21,8 +21,16 @@ if [ -d "$content_dir/Maps" ] || [ -d "$content_dir/Art" ]; then
   printf 'Backed up existing generated content to %s before regenerating it.\n' "$backup_dir"
 fi
 rm -f -- "$success_marker"
+# The editor rewrites DefaultInput/DefaultEngine with expanded defaults and a
+# machine-specific token; keep the authored configuration.
+config_snapshot=$(mktemp -d)
+cp -a -- "$unreal_dir/ShiftLeft/Config/." "$config_snapshot/"
 editor_status=0
 "$editor" "$project_file" /Engine/Maps/Entry -unattended -nop4 -nosplash -NullRHI -stdout -FullStdOutLogOutput -ExecutePythonScript="$script_dir/bootstrap_editor.py" || editor_status=$?
+rm -rf -- "$unreal_dir/ShiftLeft/Config"
+mkdir -p -- "$unreal_dir/ShiftLeft/Config"
+cp -a -- "$config_snapshot/." "$unreal_dir/ShiftLeft/Config/"
+rm -rf -- "$config_snapshot"
 if [ ! -f "$success_marker" ] || [ ! -f "$unreal_dir/ShiftLeft/Content/Maps/DeliveryGrid.umap" ]; then
   printf '%s\n' 'BLOCKED: editor bootstrap did not finish. Inspect ShiftLeft/Saved/Logs/ShiftLeft.log.'
   exit 2

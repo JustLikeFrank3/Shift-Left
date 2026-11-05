@@ -170,30 +170,30 @@ void ASLGameHUD::DrawStatus(const ASLGameMode& Mode)
     Box(28.f, 24.f, 1544.f, 124.f, Ink);
     Rule(28.f, 24.f, 1544.f, Teal, 3.f);
     Text(TEXT("SHIFT LEFT"), 48.f, 41.f, 27.f, White);
-    Text(TEXT("FIX TOMORROW'S BUGS YESTERDAY"), 49.f, 77.f, 11.f, Teal);
+    Text(TEXT("FIX TOMORROW'S BUGS YESTERDAY"), 49.f, 77.f, 13.f, Teal);
     Rule(288.f, 44.f, 1.f, Hairline, 82.f);
     Text(State.guided ? TEXT("01 / THE LEAKED SECRET / GUIDED") : TEXT("01 / THE LEAKED SECRET / STANDARD"), 310.f, 42.f, 15.f, Teal);
-    Text(Mode.GetMusicStatus(), 861.f, 43.f, 10.f, Muted);
+    Text(Mode.GetMusicStatus(), 861.f, 43.f, 13.f, Muted);
     Text(TEXT("Contain the incident. Make the next release safe."), 310.f, 69.f, 23.f, White);
     const FString LiveState = State.completed ? TEXT("RELEASE VALIDATED")
         : State.credentialRevoked ? TEXT("EXPOSED CREDENTIAL REVOKED") : TEXT("PRODUCTION CREDENTIAL EXPOSED");
-    Text(LiveState, 311.f, 108.f, 12.f,
+    Text(LiveState, 311.f, 108.f, 14.f,
          State.credentialRevoked || State.completed ? Teal : Coral);
 
     const int32 Remaining = FMath::Max(State.budget - State.effortSpent, 0);
     Box(1122.f, 42.f, 182.f, 88.f, Surface);
-    Text(TEXT("REPAIR BUDGET"), 1138.f, 51.f, 12.f, Muted);
+    Text(TEXT("REPAIR BUDGET"), 1138.f, 51.f, 14.f, Muted);
     Text(FString::Printf(TEXT("%d / %d"), Remaining, State.budget), 1138.f, 72.f, 27.f, White);
-    Text(TEXT("effort remaining"), 1138.f, 109.f, 10.f, Muted);
+    Text(TEXT("effort remaining"), 1138.f, 109.f, 13.f, Muted);
     Box(1316.f, 42.f, 236.f, 88.f, Surface);
-    Text(TEXT("INCIDENT PRESSURE"), 1332.f, 51.f, 12.f, Muted);
+    Text(TEXT("INCIDENT PRESSURE"), 1332.f, 51.f, 14.f, Muted);
     Text(FString::Printf(TEXT("%d%%"), State.pressure), 1332.f, 72.f, 27.f,
          State.pressure >= 65 ? Coral : White);
     const bool bClockPaused = !Mode.IsGameplayActive();
     const FString ClockLabel = FString::Printf(TEXT("%.0fs exposed  /  %s"),
         static_cast<double>(State.exposedMilliseconds) / 1000.,
         bClockPaused ? TEXT("PAUSED") : State.credentialRevoked ? TEXT("CONTAINED") : TEXT("ACTIVE"));
-    Text(ClockLabel, 1332.f, 109.f, 10.f, bClockPaused ? Teal : Muted);
+    Text(ClockLabel, 1332.f, 109.f, 13.f, bClockPaused ? Teal : Muted);
 }
 
 void ASLGameHUD::DrawPipeline(const ASLGameMode& Mode)
@@ -204,8 +204,8 @@ void ASLGameHUD::DrawPipeline(const ASLGameMode& Mode)
     const int32 Current = FMath::Clamp(Mode.GetCurrentStageIndex(), 0, 4);
 
     Box(28.f, 775.f, 1544.f, 101.f, Ink);
-    Text(TEXT("PREVENT THE NEXT INCIDENT"), 48.f, 787.f, 11.f, Teal);
-    Text(TEXT("CONTAIN THE CURRENT INCIDENT"), 1316.f, 787.f, 11.f, Coral);
+    Text(TEXT("PREVENT THE NEXT INCIDENT"), 48.f, 787.f, 13.f, Teal);
+    Text(TEXT("CONTAIN THE CURRENT INCIDENT"), 1316.f, 787.f, 13.f, Coral);
 
     for (int32 Index = 0; Index < 5; ++Index)
     {
@@ -218,20 +218,20 @@ void ASLGameHUD::DrawPipeline(const ASLGameMode& Mode)
         Box(X, 801.f, 195.f, 50.f, bHere ? FLinearColor(.07f, .19f, .23f, 1.f) : Surface);
         Rule(X, 801.f, 195.f, bHere ? Teal : Hairline, bHere ? 3.f : 1.f);
         Text(Names[Index], X + 12.f, 811.f, 15.f, bHere ? White : Muted);
-        Text(FString::Printf(TEXT("FIX %d"), Costs[Index]), X + 12.f, 832.f, 10.f, Muted);
+        Text(FString::Printf(TEXT("FIX %d"), Costs[Index]), X + 12.f, 832.f, 13.f, Muted);
         if (bHere)
         {
-            Text(TEXT("PATCH"), X + 123.f, 832.f, 10.f, Teal);
+            Text(TEXT("PATCH"), X + 123.f, 832.f, 13.f, Teal);
         }
         else if (bReady)
         {
-            Text(TEXT("SET"), X + 147.f, 832.f, 10.f, Teal);
+            Text(TEXT("SET"), X + 147.f, 832.f, 13.f, Teal);
         }
     }
-    Text(TEXT("A / D  MOVE     SPACE  JUMP"), 48.f, 817.f, 12.f, White);
-    Text(TEXT("E  CONNECT     F  PATCH!     Q  DOC     R  VALIDATE     ESC  HELP"),
-         48.f, 859.f, 11.f, Muted);
-    Text(TEXT("Choices: 1 / 2 / 3 or click"), 1316.f, 859.f, 11.f, Muted);
+    Text(TEXT("A / D  MOVE     SPACE  JUMP"), 48.f, 817.f, 14.f, White);
+    Text(TEXT("E  CONNECT     F  PATCH!     Q  DOC     R  VALIDATE     ESC / H  HELP"),
+         48.f, 859.f, 13.f, Muted);
+    Text(TEXT("Choices: 1 / 2 / 3 or click"), 1316.f, 859.f, 13.f, Muted);
 }
 
 void ASLGameHUD::DrawPanel(ASLGameMode& Mode)
@@ -253,11 +253,11 @@ void ASLGameHUD::DrawPanel(ASLGameMode& Mode)
         : Mode.GetPanel() == ESLPanel::Patch ? TEXT("PATCH! / DELIVERY DECISION")
         : Mode.GetPanel() == ESLPanel::Help ? TEXT("PATCH + DOC / FIELD GUIDE")
         : TEXT("PATCH / STATION CONNECTION");
-    Text(Eyebrow, X + 40.f, Y + 25.f, 12.f, Teal);
+    Text(Eyebrow, X + 40.f, Y + 25.f, 14.f, Teal);
     Text(Mode.GetPanelTitle(), X + 40.f, Y + 52.f, 27.f, White);
 
     const FString CloseLabel = TEXT("ESC  CLOSE");
-    Text(CloseLabel, X + Width - 148.f, Y + 27.f, 12.f, Muted);
+    Text(CloseLabel, X + Width - 148.f, Y + 27.f, 14.f, Muted);
     HitBox(X + Width - 160.f, Y + 12.f, 144.f, 36.f, TEXT("ClosePanel"), 20);
 
     const TArray<FSLChoice> Choices = Mode.GetChoices();
@@ -288,8 +288,8 @@ void ASLGameHUD::DrawPanel(ASLGameMode& Mode)
                 15.f, Muted, 2);
         if (!Choice.State.IsEmpty())
         {
-            const float StateWidth = Measure(Choice.State, 11.f);
-            Text(Choice.State, X + Width - 57.f - StateWidth, ButtonY + 13.f, 11.f, Teal);
+            const float StateWidth = Measure(Choice.State, 13.f);
+            Text(Choice.State, X + Width - 57.f - StateWidth, ButtonY + 13.f, 13.f, Teal);
         }
         if (Choice.bEnabled)
         {
@@ -297,9 +297,9 @@ void ASLGameHUD::DrawPanel(ASLGameMode& Mode)
         }
     }
     Rule(X + 40.f, Y + Height - 46.f, Width - 80.f, Hairline);
-    Text(TEXT("INCIDENT CLOCK PAUSED WHILE READING"), X + 40.f, Y + Height - 29.f, 11.f, Teal);
+    Text(TEXT("INCIDENT CLOCK PAUSED WHILE READING"), X + 40.f, Y + Height - 29.f, 13.f, Teal);
     Text(TEXT("1 / 2 / 3  SELECT     ESC  RETURN TO THE GRID"),
-         X + Width - 403.f, Y + Height - 29.f, 11.f, Muted);
+         X + Width - 403.f, Y + Height - 29.f, 13.f, Muted);
 }
 
 void ASLGameHUD::NotifyHitBoxClick(FName BoxName)

@@ -93,7 +93,7 @@ void ASLDeliveryWorld::Rack(FVector Position, float Scale, bool bAlert)
 {
     if (UStaticMesh* Imported = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Art/ServerRack.ServerRack")))
     {
-        UStaticMeshComponent* Component = Shape(TEXT("/Game/Art/ServerRack.ServerRack"), Position, FVector(1), Metal);
+        UStaticMeshComponent* Component = Shape(TEXT("/Game/Art/ServerRack.ServerRack"), Position, FVector(1), Metal, false, FRotator(0,180,0));
         const FBox Bounds = Imported->GetBoundingBox();
         const float S = 300.f * Scale / FMath::Max(static_cast<float>(Bounds.GetSize().Z), 1.f);
         Component->SetRelativeScale3D(FVector(S));
@@ -123,7 +123,7 @@ void ASLDeliveryWorld::Terminal(FVector Position, int32 Stage)
 {
     if (UStaticMesh* Imported = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Art/Terminal.Terminal")))
     {
-        UStaticMeshComponent* Component = Shape(TEXT("/Game/Art/Terminal.Terminal"), Position, FVector(1), PanelMaterial);
+        UStaticMeshComponent* Component = Shape(TEXT("/Game/Art/Terminal.Terminal"), Position, FVector(1), PanelMaterial, false, FRotator(0,180,0));
         const FBox Bounds = Imported->GetBoundingBox();
         const float S = 170.f / FMath::Max(static_cast<float>(Bounds.GetSize().Z), 1.f);
         Component->SetRelativeScale3D(FVector(S));
@@ -144,7 +144,6 @@ void ASLDeliveryWorld::Terminal(FVector Position, int32 Stage)
             Cube(Position + FVector(-16,-26,165-Line*19), FVector(Line==0?104:75,3,5), Stage==4?Coral:Teal);
         Cube(Position + FVector(0,-35,98), FVector(165,69,12), Metal);
     }
-    Sign(TEXT("E  CONNECT    F  PATCH!"), Position + FVector(0,-82,218), 21.f, FColor(160,243,226));
 }
 
 void ASLDeliveryWorld::RebuildWorld()
@@ -179,21 +178,21 @@ void ASLDeliveryWorld::RebuildWorld()
     }
     for (int32 Pipe=0; Pipe<3; ++Pipe)
     {
-        const float Z = 365.f + Pipe * 58.f;
+        const float Z = 520.f + Pipe * 58.f;
         Shape(CylinderPath,FVector(0,365,Z),FVector(.27f,.27f,62.f),Metal,false,FRotator(90,0,0));
         Shape(CylinderPath,FVector(0,344,Z),FVector(.055f,.055f,62.f),Pipe==2?Coral:Teal,false,FRotator(90,0,0));
     }
 
     const TCHAR* Names[] = {TEXT("SOURCE"),TEXT("BUILD"),TEXT("TEST"),TEXT("STAGING"),TEXT("PRODUCTION")};
-    const TCHAR* Subtitles[] = {TEXT("PREVENT / 01"),TEXT("PACKAGE / 02"),TEXT("VERIFY / 03"),TEXT("REHEARSE / 04"),TEXT("CONTAIN / 05")};
+    const TCHAR* Subtitles[] = {TEXT("PREVENT / 01  -  FIX 1"),TEXT("PACKAGE / 02  -  FIX 2"),TEXT("VERIFY / 03  -  FIX 4"),TEXT("REHEARSE / 04  -  FIX 8"),TEXT("CONTAIN / 05  -  FIX 16")};
     for (int32 Stage=0; Stage<5; ++Stage)
     {
         const float X = -2400.f + Stage * 1200.f;
         UMaterialInterface* Accent = Stage==4?Coral:Teal;
-        Cube(FVector(X,354,485),FVector(740,34,138),PanelMaterial);
-        Cube(FVector(X,331,553),FVector(742,8,6),Accent);
-        Sign(Names[Stage],FVector(X,328,503),Stage==4?52.f:66.f,Stage==4?FColor(255,150,119):FColor(143,250,233));
-        Sign(Subtitles[Stage],FVector(X,328,451),23.f,FColor(124,166,183));
+        Cube(FVector(X,354,345),FVector(740,34,138),PanelMaterial);
+        Cube(FVector(X,331,413),FVector(742,8,6),Accent);
+        Sign(Names[Stage],FVector(X,328,362),Stage==4?52.f:66.f,Stage==4?FColor(255,150,119):FColor(143,250,233));
+        Sign(Subtitles[Stage],FVector(X,328,314),23.f,FColor(124,166,183));
         Cube(FVector(X,0,1),FVector(900,450,2),Navy);
         StationStrips.Add(Cube(FVector(X,-219,4),FVector(880,8,4),Accent));
         Cube(FVector(X-440,0,4),FVector(8,445,4),Accent);
@@ -201,7 +200,6 @@ void ASLDeliveryWorld::RebuildWorld()
         Rack(FVector(X-290,230,0),1.f,Stage==4);
         Rack(FVector(X+270,300,0),.88f,Stage==4);
         Terminal(FVector(X,110,0),Stage);
-        Sign(FString::Printf(TEXT("REPAIR EFFORT %d"),1<<Stage),FVector(X,-230,44),26.f,FColor(164,195,208));
         Light(FVector(X,50,380),Stage==4?FLinearColor(1,.12f,.07f):FLinearColor(.04f,.6f,.8f),Stage==4?6500:4000,720);
         Cube(FVector(X-426,268,44),FVector(80,110,88),Metal);
         Cube(FVector(X-426,210,53),FVector(48,4,9),Accent);
@@ -209,8 +207,8 @@ void ASLDeliveryWorld::RebuildWorld()
         if (Stage < 4)
             Sign(TEXT(">>"),FVector(X+590,310,180),70.f,FColor(53,113,131));
     }
-    Sign(TEXT("<  SHIFT THE FIX LEFT"),FVector(-2500,320,630),28.f,FColor(125,222,211));
-    Sign(TEXT("LIVE GRID / SYNTHETIC SYSTEM"),FVector(2400,320,630),24.f,FColor(249,147,120));
+    Sign(TEXT("<  SHIFT THE FIX LEFT"),FVector(-1800,330,330),30.f,FColor(125,222,211));
+    Sign(TEXT("LIVE GRID / SYNTHETIC SYSTEM"),FVector(1800,330,330),26.f,FColor(249,147,120));
     for (int32 Index=0; Index<7; ++Index)
         LeakBars.Add(Cube(FVector(2640.f+(Index%3)*34.f,210,380.f+Index*34.f),FVector(12,12,60),Coral));
     LeakLight = NewObject<UPointLightComponent>(this,NAME_None,RF_Transactional);

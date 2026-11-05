@@ -8,6 +8,7 @@ class UCameraComponent;
 class USpringArmComponent;
 class UStaticMeshComponent;
 class UTextRenderComponent;
+class UPointLightComponent;
 class USceneComponent;
 class ASLGameMode;
 
@@ -34,8 +35,12 @@ private:
     UPROPERTY() TArray<UStaticMeshComponent*> FallbackDoc;
     UPROPERTY() UTextRenderComponent* PatchName;
     UPROPERTY() UTextRenderComponent* DocName;
+    UPROPERTY() UTextRenderComponent* PatchCallout;
+    UPROPERTY() UPointLightComponent* FillLight;
+    UPROPERTY() UPointLightComponent* FlashLight;
     float AnimationTime = 0.f;
     float Facing = 1.f;
+    float TurnYaw = 0.f;
     bool bArticulated = false;
     ASLGameMode* Game() const;
     void MoveRight(float Value);

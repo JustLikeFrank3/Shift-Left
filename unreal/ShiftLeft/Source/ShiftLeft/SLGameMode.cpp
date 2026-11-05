@@ -1,5 +1,6 @@
 #include "SLGameMode.h"
 #include "SLDeliveryWorld.h"
+#include "SLAutoplay.h"
 #include "SLGameHUD.h"
 #include "SLPatchCharacter.h"
 #include "Engine/World.h"
@@ -44,6 +45,8 @@ void ASLGameMode::BeginPlay()
     if (APawn* Pawn = UGameplayStatics::GetPlayerPawn(this, 0))
         Pawn->SetActorLocation(FVector(2220.f, 0.f, 120.f), false, nullptr, ETeleportType::TeleportPhysics);
     OpenPanel(ESLPanel::Help);
+    FString AutoplayScenario;
+    if (FParse::Value(FCommandLine::Get(), TEXT("SLAutoplay="), AutoplayScenario)) GetWorld()->SpawnActor<ASLAutoplay>();
 }
 
 void ASLGameMode::Tick(float DeltaSeconds)
@@ -189,6 +192,9 @@ void ASLGameMode::SelectChoice(int32 Index)
     if (Panel == ESLPanel::Patch)
     {
         ApplyAction(Index == 0 ? ShiftLeft::Action::RouteToRuntime : ShiftLeft::Action::RouteIntoArtifact);
+        // Return to the grid so PATCH's reaction and the feedback line are visible.
+        PatchPulse = 1.2f;
+        if (Panel == ESLPanel::Patch) ClosePanel();
         return;
     }
     if (Panel == ESLPanel::Station)
@@ -231,7 +237,7 @@ FString ASLGameMode::GetPanelTitle() const
 FString ASLGameMode::GetPanelBody() const
 {
     if (Panel == ESLPanel::Help)
-        return TEXT("You are PATCH. A credential escaped in a shipped image. Contain the incident and prepare a safe release. SOURCE is left; PRODUCTION is right.\nA / D: move. E: connect. F: Patch! R: validate. Q: DOC. Space: jump. M: music.\nRepair effort doubles at each stage; budget 24. Reading pauses the clock. Guided mode removes the exposure deadline. Music begins when you enter.");
+        return TEXT("You are PATCH. A credential escaped in a shipped image. Contain the incident and prepare a safe release. SOURCE is left; PRODUCTION is right.\nA / D: move. E: connect. F: Patch! R: validate. Q: DOC. Space: jump. M: music. Esc or H: this guide.\nRepair effort doubles at each stage; budget 24. Reading pauses the clock. Guided mode removes the exposure deadline. Music begins when you enter.");
     if (Panel == ESLPanel::Doc)
         return TEXT("LOCAL REFERENCE / OFFLINE. Authored guidance; no live AI service is connected.\n\nContain: review usage, revoke the exposed key, provision a replacement. Editing a file cannot invalidate a copied credential.\nRoute: a runtime binding gives the service its key. An artifact distributes another extractable copy. If a replacement escapes, revoke it and issue another.\nPrevent: remove the source literal, install an early secret check, then validate. Existing artifacts are separate from source; the runtime route builds a clean image.\n\nEffort from SOURCE to PRODUCTION: 1 / 2 / 4 / 8 / 16. Emergency actions are free. Escape > Retry resets the incident and budget.");
     if (Panel == ESLPanel::Complete)
@@ -276,4 +282,9 @@ FString ASLGameMode::GetMusicStatus() const
 {
     if (!Score || !Score->Sound) return TEXT("MUSIC / ASSET NOT IMPORTED");
     return bMusicEnabled ? TEXT("M MUSIC / ON") : TEXT("M MUSIC / OFF");
+}
+
+bool ASLGameMode::IsMusicPlaying() const
+{
+    return Score && Score->IsPlaying();
 }

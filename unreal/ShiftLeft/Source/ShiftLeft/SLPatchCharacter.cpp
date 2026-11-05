@@ -3,6 +3,7 @@
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
+#include "Components/PointLightComponent.h"
 #include "Components/SceneComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/TextRenderComponent.h"
@@ -41,6 +42,8 @@ namespace
         const float Scale = Height / FMath::Max(static_cast<float>(Box.GetSize().Z), 1.f);
         Component->SetRelativeScale3D(FVector(Scale));
         Component->SetRelativeLocation(FVector(0.f, 0.f, -95.f - Box.Min.Z * Scale));
+        // Sources face Blender -Y and import facing +Y, away from the side camera.
+        Component->SetRelativeRotation(FRotator(0.f, 180.f, 0.f));
         SetArtMaterials(Component);
         return true;
     }
@@ -66,9 +69,9 @@ ASLPatchCharacter::ASLPatchCharacter()
 
     CameraArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SideCameraArm"));
     CameraArm->SetupAttachment(RootComponent);
-    CameraArm->TargetArmLength = 1120.f;
-    CameraArm->SetRelativeRotation(FRotator(-8.f, 90.f, 0.f));
-    CameraArm->TargetOffset = FVector(65.f, 0.f, 145.f);
+    CameraArm->TargetArmLength = 940.f;
+    CameraArm->SetRelativeRotation(FRotator(-6.f, 90.f, 0.f));
+    CameraArm->TargetOffset = FVector(65.f, 0.f, 20.f);
     CameraArm->bDoCollisionTest = false;
     CameraArm->bEnableCameraLag = true;
     CameraArm->CameraLagSpeed = 6.f;
@@ -133,8 +136,25 @@ ASLPatchCharacter::ASLPatchCharacter()
         Result->SetWorldSize(Size); Result->SetTextRenderColor(Color); Result->SetText(FText::FromString(Text));
         return Result;
     };
-    PatchName = Label(TEXT("PatchName"), RootComponent, TEXT("PATCH"), FVector(0,-15,140), FColor(145,255,232), 28.f);
-    DocName = Label(TEXT("DocName"), DocRoot, TEXT("DOC"), FVector(0,-15,62), FColor(133,211,255), 23.f);
+    PatchName = Label(TEXT("PatchName"), RootComponent, TEXT("PATCH"), FVector(0,-15,128), FColor(145,255,232), 24.f);
+    DocName = Label(TEXT("DocName"), DocRoot, TEXT("DOC"), FVector(0,-15,68), FColor(133,211,255), 22.f);
+    PatchCallout = Label(TEXT("PatchCallout"), RootComponent, TEXT("PATCH!"), FVector(0,-60,175), FColor(120,255,214), 46.f);
+    PatchCallout->SetVisibility(false);
+    // Camera-side fill keeps the navy characters readable against the dark corridor.
+    FillLight = CreateDefaultSubobject<UPointLightComponent>(TEXT("CharacterFill"));
+    FillLight->SetupAttachment(RootComponent);
+    FillLight->SetRelativeLocation(FVector(40.f, -260.f, 150.f));
+    FillLight->SetLightColor(FLinearColor(.72f, .88f, 1.f));
+    FillLight->SetIntensity(5200.f);
+    FillLight->SetAttenuationRadius(620.f);
+    FillLight->SetCastShadows(false);
+    FlashLight = CreateDefaultSubobject<UPointLightComponent>(TEXT("PatchFlash"));
+    FlashLight->SetupAttachment(RootComponent);
+    FlashLight->SetRelativeLocation(FVector(0.f, -120.f, 90.f));
+    FlashLight->SetLightColor(FLinearColor(.2f, 1.f, .7f));
+    FlashLight->SetIntensity(0.f);
+    FlashLight->SetAttenuationRadius(700.f);
+    FlashLight->SetCastShadows(false);
 }
 
 void ASLPatchCharacter::BeginPlay()
@@ -143,7 +163,8 @@ void ASLPatchCharacter::BeginPlay()
     SetActorLocation(FVector(2220.f,0.f,120.f),false,nullptr,ETeleportType::TeleportPhysics);
     const bool bPatchArt = LoadArt(ImportedPatch, TEXT("/Game/Art/PATCH.PATCH"), 190.f);
     const TCHAR* Paths[] = {TEXT("/Game/Art/PATCH_Body.PATCH_Body"),TEXT("/Game/Art/PATCH_Arm_L.PATCH_Arm_L"),TEXT("/Game/Art/PATCH_Arm_R.PATCH_Arm_R"),TEXT("/Game/Art/PATCH_Leg_L.PATCH_Leg_L"),TEXT("/Game/Art/PATCH_Leg_R.PATCH_Leg_R")};
-    const FVector Pivots[] = {FVector(0,0,0),FVector(-46,0,94),FVector(46,0,94),FVector(-23,0,54),FVector(23,0,54)};
+    // Imported parts are turned 180 degrees to face the camera, so source X pivots mirror.
+    const FVector Pivots[] = {FVector(0,0,0),FVector(46,0,94),FVector(-46,0,94),FVector(23,0,54),FVector(-23,0,54)};
     constexpr float ArtScale = 190.f / 228.4f;
     bArticulated = true;
     for (int32 Index=0; Index<ArticulatedPatch.Num(); ++Index)
@@ -153,12 +174,13 @@ void ASLPatchCharacter::BeginPlay()
         ArticulatedPatch[Index]->SetStaticMesh(Mesh);
         ArticulatedPatch[Index]->SetRelativeLocation(Pivots[Index]*ArtScale+FVector(0,0,-95));
         ArticulatedPatch[Index]->SetRelativeScale3D(FVector(ArtScale));
+        ArticulatedPatch[Index]->SetRelativeRotation(FRotator(0.f, 180.f, 0.f));
         SetArtMaterials(ArticulatedPatch[Index]);
     }
     for (UStaticMeshComponent* Part : ArticulatedPatch) Part->SetVisibility(bArticulated);
     ImportedPatch->SetVisibility(!bArticulated && bPatchArt);
-    const bool bDocArt = LoadArt(ImportedDoc, TEXT("/Game/Art/DOC.DOC"), 65.f);
-    if (bDocArt) ImportedDoc->AddLocalOffset(FVector(0,0,72.f));
+    const bool bDocArt = LoadArt(ImportedDoc, TEXT("/Game/Art/DOC.DOC"), 88.f);
+    if (bDocArt) ImportedDoc->AddLocalOffset(FVector(0,0,62.f));
     UMaterialInterface* Navy = Material(this, TEXT("M_Navy"), FLinearColor(.018f,.035f,.07f));
     UMaterialInterface* White = Material(this, TEXT("M_White"), FLinearColor(.78f,.9f,.94f));
     UMaterialInterface* Cyan = Material(this, TEXT("M_Cyan"), FLinearColor(.02f,.7f,.9f));
@@ -187,15 +209,19 @@ void ASLPatchCharacter::Tick(float DeltaSeconds)
     const float Speed = FMath::Abs(GetVelocity().X);
     const bool bWalk = Speed > 20.f && GetCharacterMovement()->IsMovingOnGround();
     PatchRoot->SetRelativeLocation(FVector(0,0,bWalk ? FMath::Abs(FMath::Sin(AnimationTime * 13.f)) * 3.f : FMath::Sin(AnimationTime * 2.f) * 1.f));
-    PatchRoot->SetRelativeRotation(FRotator(0, Facing * (bWalk ? -6.f : 0.f), 0));
-    PatchRoot->SetRelativeScale3D(FVector(1.f + FMath::Sin(FMath::Clamp(Pulse/.8f,0.f,1.f) * PI) * .035f));
+    // Turn three-quarters toward travel so the stride reads; face the camera at rest.
+    TurnYaw = FMath::FInterpTo(TurnYaw, bWalk ? Facing * 35.f : 0.f, DeltaSeconds, 9.f);
+    PatchRoot->SetRelativeRotation(FRotator(0, TurnYaw, 0));
+    PatchRoot->SetRelativeScale3D(FVector(1.f + FMath::Sin(FMath::Clamp(Pulse/1.2f,0.f,1.f) * PI) * .08f));
     if (bArticulated)
     {
         const float Stride = bWalk ? FMath::Sin(AnimationTime*11.f) * 32.f * Facing : 0.f;
-        ArticulatedPatch[1]->SetRelativeRotation(FRotator(-Stride*.65f,0,0));
-        ArticulatedPatch[2]->SetRelativeRotation(FRotator(Stride*.65f-FMath::Sin(FMath::Clamp(Pulse/.8f,0.f,1.f)*PI)*58.f,0,0));
-        ArticulatedPatch[3]->SetRelativeRotation(FRotator(Stride,0,0));
-        ArticulatedPatch[4]->SetRelativeRotation(FRotator(-Stride,0,0));
+        // Pitch applies in each part's own frame before the 180-degree turn;
+        // negative pitch lifts Arm_R up and out for the PATCH! punch.
+        ArticulatedPatch[1]->SetRelativeRotation(FRotator(-Stride*.65f,180,0));
+        ArticulatedPatch[2]->SetRelativeRotation(FRotator(Stride*.65f-FMath::Sin(FMath::Clamp(Pulse/1.2f,0.f,1.f)*PI)*70.f,180,0));
+        ArticulatedPatch[3]->SetRelativeRotation(FRotator(Stride,180,0));
+        ArticulatedPatch[4]->SetRelativeRotation(FRotator(-Stride,180,0));
     }
     if (FallbackPatch.Num() >= 9)
     {
@@ -205,8 +231,19 @@ void ASLPatchCharacter::Tick(float DeltaSeconds)
         FallbackPatch[7]->SetRelativeRotation(FRotator(-Swing*.6f,0,0));
         FallbackPatch[8]->SetRelativeRotation(FRotator(Swing*.6f,0,0));
     }
-    DocRoot->SetRelativeLocation(FVector(135.f, 10.f, 115.f + FMath::Sin(AnimationTime * 2.4f) * 10.f));
-    ImportedPatch->SetRelativeRotation(FRotator(0.f, FMath::Sin(Pulse * 12.f) * Pulse * 4.f, 0.f));
+    DocRoot->SetRelativeLocation(FVector(150.f, 10.f, 70.f + FMath::Sin(AnimationTime * 2.4f) * 10.f));
+    ImportedPatch->SetRelativeRotation(FRotator(0.f, 180.f + FMath::Sin(Pulse * 12.f) * Pulse * 4.f, 0.f));
+    // PATCH! reads at a glance: callout pops, a mint flash washes the deck, the arm punches up.
+    const float Burst = FMath::Clamp(Pulse / 1.2f, 0.f, 1.f);
+    PatchCallout->SetVisibility(Burst > 0.f);
+    PatchName->SetVisibility(Burst <= 0.f);
+    PatchCallout->SetRelativeLocation(FVector(-30.f, -60.f, 128.f + (1.f - Burst) * 30.f));
+    PatchCallout->SetWorldSize(34.f + FMath::Sin(Burst * PI) * 22.f);
+    FlashLight->SetIntensity(Burst * Burst * 26000.f);
+    // A route that re-exposed the replacement reads as an alarm, not a success.
+    const bool bAlarm = CurrentGame && CurrentGame->GetIncident().replacementExposed;
+    FlashLight->SetLightColor(bAlarm ? FLinearColor(1.f, .16f, .1f) : FLinearColor(.2f, 1.f, .7f));
+    PatchCallout->SetTextRenderColor(bAlarm ? FColor(255,120,96) : FColor(120,255,214));
     // End walls never cost a life or erase progress.
     const FVector Position = GetActorLocation();
     if (Position.X < -2910.f || Position.X > 2910.f)

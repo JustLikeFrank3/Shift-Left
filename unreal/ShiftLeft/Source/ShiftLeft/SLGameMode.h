@@ -40,6 +40,7 @@ public:
     TArray<FSLChoice> GetChoices() const;
     float GetPatchPulse() const { return PatchPulse; }
     FString GetMusicStatus() const;
+    bool IsMusicPlaying() const;
 
     void Interact();
     void OpenPatch();
