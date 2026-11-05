@@ -1,6 +1,8 @@
-# SHIFT LEFT — Unreal Linux vertical slice
+# SHIFT LEFT — Unreal vertical slice
 
 This is the native Unreal Engine 5.8 port of **The Leaked Secret**. It contains C++ gameplay source, an independently tested incident simulation, original Blender/FBX art, and scripts to import the assets, create a map and package Linux builds.
+
+**Mac is the current development target.** Use [MAC_HANDOFF.md](MAC_HANDOFF.md) for Apple silicon installation, build, playtest and packaging commands on branch `feat/unreal-mac-build`. It starts from the latest Linux branch at `af72e1a`, including its verified native fixes and committed assets. Mac execution remains unverified until these commands run on macOS. [IOS_PORT.md](IOS_PORT.md) describes the additional mobile work; an iOS package is not implemented yet. The Linux instructions and recorded results below remain available.
 
 **Current verification (2026-11-04, UE 5.8.0, Ubuntu 26.04, RTX 5060 Ti):** the native module compiles, the bootstrap imports the art and score and saves the map, and a packaged Linux Development build (`build/Linux/ShiftLeft.sh`) launches and renders on Vulkan. Scripted in-engine playtests pass in both the editor's `-game` mode and the packaged build: the full incident (grade S), the wrong route and its recovery, the effort budget and retry, guided versus standard deadlines, paused reading time and the M music toggle. The portable model still passes its 68 GCC checks. See [HANDOFF.md](HANDOFF.md#native-verification-results) for what this does and does not cover. The package is built locally and not published.
 

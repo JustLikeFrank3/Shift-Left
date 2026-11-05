@@ -2,7 +2,7 @@
   "FileVersion": 3,
   "EngineAssociation": "5.8",
   "Category": "Games",
-  "Description": "SHIFT LEFT — native Linux Unreal vertical slice",
+  "Description": "SHIFT LEFT — native Unreal vertical slice",
   "Modules": [{"Name": "ShiftLeft", "Type": "Runtime", "LoadingPhase": "Default"}],
   "Plugins": [
     {"Name": "PythonScriptPlugin", "Enabled": true, "TargetAllowList": ["Editor"]},

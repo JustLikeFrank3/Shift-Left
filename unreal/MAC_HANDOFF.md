@@ -1,0 +1,80 @@
+# SHIFT LEFT — Apple silicon Mac handoff
+
+Current branch: `feat/unreal-mac-build`. Base: `origin/feat/unreal-linux-slice` at `af72e1a` (`feat(unreal): add Quit to the field guide`). No merge to `main` is required.
+
+The base includes recorded Linux UE 5.8.0 compile, bootstrap, in-engine and packaged playtest results, plus the generated `.uasset` files and `DeliveryGrid.umap`. Reuse those assets; compile native Mac binaries and cook Metal shaders locally. **Mac compilation, rendering and packaging have not been verified in the cloud workspace.**
+
+## Install Unreal and Xcode
+
+1. Download the **Epic Games Launcher for macOS** from [Epic's official Unreal download page](https://www.unrealengine.com/download). Sign in, open Unreal Engine → Library, add an engine version and select **5.8**. Install its Mac components. The usual installation directory is `/Users/Shared/Epic Games/UE_5.8`; adjust the commands if you choose another location. Use the Mac engine installation, not the Linux archive.
+2. Install full Xcode and launch it once to finish setup. Epic's current [UE 5.8 Mac requirements](https://dev.epicgames.com/documentation/unreal-engine/macos-development-requirements-for-unreal-engine) list **Xcode 26.0 minimum, 26.1.1 recommended**, and explicitly mark **26.4 incompatible**. Check that page and the installed engine's `Engine/Config/Apple/Apple_SDK.json` before choosing a different release. Obtain a specific Xcode version from [Apple Developer downloads](https://developer.apple.com/download/all/) if the App Store offers an incompatible release.
+3. In Xcode → Settings → Locations, select this full Xcode installation for Command Line Tools. Command Line Tools alone are insufficient. Install the Metal Toolchain component if Xcode requests it. Apple documents [additional Xcode components](https://developer.apple.com/documentation/xcode/downloading-and-installing-additional-xcode-components).
+4. Ensure Python 3 and Git are available. Epic lists 16 GB minimum RAM and recommends 32 GB or more. Leave substantial free disk space for the engine, shaders and cooked builds. The Mac renderer profile uses conventional shadow maps to cover M1 hardware while retaining software Lumen; higher-end settings can be profiled later.
+
+If the launcher reports `SU-DS01` against `/Volumes/Epic Games Launcher`, it is running from the mounted installer image. Quit it, drag `Epic Games Launcher.app` into Applications, eject the installer image, and launch `/Applications/Epic Games Launcher.app`. Recheck actual Mac free space only if the installed copy still reports a storage error. Epic documents the [Applications installation location](https://www.epicgames.com/help/en-US/c-Category_EpicGamesStore/c-EpicGamesStore_LauncherSupport/how-do-i-change-the-installation-directory-of-the-epic-games-launcher-a000084679?lang=en-US).
+
+Check the selected developer tools in Terminal:
+
+```bash
+xcode-select -p
+xcodebuild -version
+xcrun --find metal
+```
+
+If the developer directory points to `/Library/Developer/CommandLineTools`, select the full Xcode app in Xcode's settings. If `metal` is missing, finish installing the matching Metal Toolchain component before starting Unreal.
+
+## Get and build the Mac branch
+
+For a fresh checkout:
+
+```bash
+git clone --branch feat/unreal-mac-build https://github.com/JustLikeFrank3/Shift-Left.git
+cd Shift-Left/unreal
+```
+
+For an existing checkout, save local changes, fetch origin, then switch to `feat/unreal-mac-build` (or use `git switch --track origin/feat/unreal-mac-build` if it does not exist locally). Do not overwrite local work or merge earlier PRs just to run this version.
+
+Close Unreal, then run from `Shift-Left/unreal`:
+
+```bash
+./scripts/check-mac.sh "/Users/Shared/Epic Games/UE_5.8"
+./scripts/test-core.sh
+python3 ./scripts/verify-source.py
+set -o pipefail
+./scripts/build-mac.sh "/Users/Shared/Epic Games/UE_5.8" 2>&1 | tee build-mac.log
+```
+
+Continue only after the build succeeds. The Mac script preserves the committed map and art by default. An explicit `--refresh-assets` reruns the editor bootstrap when source FBX/WAV files change, backing up generated content first. Keep custom levels separately and close the editor before invoking an external rebuild. The scripts preserve authored Config files because editor/cook processes can rewrite them.
+
+Open the project:
+
+```bash
+open -a "/Users/Shared/Epic Games/UE_5.8/Engine/Binaries/Mac/UnrealEditor.app" "$PWD/ShiftLeft/ShiftLeft.uproject"
+```
+
+Let Metal shaders finish compiling. Open `/Game/Maps/DeliveryGrid`, then press **Play**. A missing-module prompt before the native module has compiled is expected; resolve the first real compiler error rather than assuming Linux binaries can be reused.
+
+## Verify the Mac slice
+
+Check PATCH's facing, readable size and articulated walking; DOC's floating book model; floor collision; camera; keyboard and trackpad/mouse choices; terminal feedback; and actual audible music with M toggling it. H opens/closes the guide in Play-in-Editor, where Escape may stop play. The guide includes Quit.
+
+At production, inspect usage, revoke the leaked credential and provision a replacement. Move left to SOURCE. Replace the source literal, add the early check, then use PATCH! to bind the replacement at runtime. Validate the release. Also test a wrong artifact route, recovery, the budget, retry, guided mode and paused panel reading. The existing Linux handoff records the full scripted scenarios; they still need to pass on Mac. Automated tests do not establish mouse usability or sound quality.
+
+Only The Leaked Secret is native. DOC is currently an offline guide. Keep the original score; the browser's adaptive audio mixer has not been ported. Blender previews are not Mac gameplay evidence.
+
+## Package for macOS
+
+After native play succeeds:
+
+```bash
+set -o pipefail
+./scripts/package-mac.sh "/Users/Shared/Epic Games/UE_5.8" 2>&1 | tee package-mac.log
+```
+
+The archive goes under `unreal/build/Mac/`. Locate the generated `.app`, launch it, and repeat the full incident. First produce a working native Apple silicon build. Verify output architectures separately before claiming a universal Intel/Apple silicon release. Distribution to other Macs also needs a deliberate signing/notarization plan; a local Development package is not automatically a public release.
+
+For failures, preserve `build-mac.log`, `package-mac.log`, and `ShiftLeft/Saved/Logs/ShiftLeft.log`. Report the first real error, `xcodebuild -version`, `sw_vers`, chip/RAM and the engine's exact 5.8 patch version. Rendering issues require a screenshot from the actual Mac and its engine log.
+
+## Local Codex prompt
+
+> Continue SHIFT LEFT on feat/unreal-mac-build, based on the latest Linux Unreal branch af72e1a. Read AGENTS.md, unreal/MAC_HANDOFF.md and the recorded Linux results. This is an Apple silicon Mac; locate Unreal 5.8, normally /Users/Shared/Epic Games/UE_5.8, and verify compatible full Xcode/Metal tools. Preserve local changes and committed content. Run portable checks, compile the Mac Editor module, verify DeliveryGrid in Play, then cook/package and launch the Mac app. Fix real compiler, Metal, input, camera, character, audio and packaging issues. Preserve the Linux and browser checkpoints. iOS is follow-up work described in IOS_PORT.md. Record exactly what ran and what remains unverified. Commit and push this branch; do not merge.

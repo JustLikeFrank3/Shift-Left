@@ -73,4 +73,4 @@ for content in ("Art", "Audio"):
             f"dynamically loaded {content} may be excluded from cooking")
 
 print(f"Source preflight passed: {len(assets)} FBX inputs, stereo score, module targets, native inputs and cook paths.")
-print("Unreal C++ compilation, editor import, rendering and packaging remain unverified until UE5.8 runs.")
+print("This source preflight does not compile or run Unreal. See the platform handoff for native verification results.")
