@@ -34,5 +34,17 @@ trap 'exit 143' TERM
 # Use the system env executable during staging, as expected by the engine tools.
 PATH="/usr/bin:/bin:$PATH"
 export PATH
-"$engine_dir/Engine/Build/BatchFiles/RunUAT.sh" BuildCookRun "-project=$unreal_dir/ShiftLeft/ShiftLeft.uproject" -noP4 -platform=Mac -clientconfig=Development -build -cook -stage -pak -archive "-archivedirectory=$output_dir" -map=/Game/Maps/DeliveryGrid -utf8output
+# Apple packaging finalizes the self-contained app before Archive copies it.
+# Without -package UE 5.8 can report success while archiving the bare build app,
+# which has no Contents/UE cooked data and cannot run independently.
+"$engine_dir/Engine/Build/BatchFiles/RunUAT.sh" BuildCookRun "-project=$unreal_dir/ShiftLeft/ShiftLeft.uproject" -noP4 -platform=Mac -clientconfig=Development -build -cook -stage -pak -package -archive "-archivedirectory=$output_dir" -map=/Game/Maps/DeliveryGrid -utf8output
+app_dir="$output_dir/ShiftLeft.app"
+pak_dir="$app_dir/Contents/UE/ShiftLeft/Content/Paks"
+for cooked_file in ShiftLeft-Mac.pak ShiftLeft-Mac.utoc ShiftLeft-Mac.ucas; do
+  if [ ! -s "$pak_dir/$cooked_file" ]; then
+    printf 'BLOCKED: archived app is missing cooked content: %s\n' "$pak_dir/$cooked_file" >&2
+    exit 2
+  fi
+done
+codesign --verify --deep --strict "$app_dir"
 printf 'Mac package archived to %s. Launch and playtest it on the target Mac before sharing.\n' "$output_dir"

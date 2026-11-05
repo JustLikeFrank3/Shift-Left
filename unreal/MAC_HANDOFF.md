@@ -2,7 +2,7 @@
 
 Current branch: `feat/unreal-mac-build`. Base: `origin/feat/unreal-linux-slice` at `af72e1a` (`feat(unreal): add Quit to the field guide`). No merge to `main` is required.
 
-The base includes recorded Linux UE 5.8.0 compile, bootstrap, in-engine and packaged playtest results, plus the generated `.uasset` files and `DeliveryGrid.umap`. Reuse those assets; compile native Mac binaries and cook Metal shaders locally. **Mac compilation, rendering and packaging have not been verified in the cloud workspace.**
+The base includes recorded Linux UE 5.8.0 compile, bootstrap, in-engine and packaged playtest results, plus the generated `.uasset` files and `DeliveryGrid.umap`. Reuse those assets; compile native Mac binaries and cook Metal shaders locally. Mac verification from the actual machine is recorded below; the earlier cloud workspace did not verify Mac execution.
 
 ## Install Unreal and Xcode
 
@@ -56,6 +56,16 @@ Let Metal shaders finish compiling. Open `/Game/Maps/DeliveryGrid`, then press *
 
 ## Verify the Mac slice
 
+Run the existing scripted scenarios on Mac after compilation (the editor must be closed first):
+
+```bash
+./scripts/playtest-mac.sh "/Users/Shared/Epic Games/UE_5.8"
+# Or run the same checks against the executable inside the packaged app:
+SL_GAME="/absolute/path/ShiftLeft.app/Contents/MacOS/ShiftLeft" ./scripts/playtest-mac.sh -
+```
+
+This runner uses Python's timeout support rather than GNU `timeout`, preserves authored Config files, and writes logs under `playtest/Mac/`. It requires both a successful process exit and the scenario's zero-failure PASS marker. The scenarios use Slate input injection and in-engine screenshots; they do not verify OS keyboard/mouse input or audible sound quality. Allow the first launch to compile Metal shaders.
+
 Check PATCH's facing, readable size and articulated walking; DOC's floating book model; floor collision; camera; keyboard and trackpad/mouse choices; terminal feedback; and actual audible music with M toggling it. H opens/closes the guide in Play-in-Editor, where Escape may stop play. The guide includes Quit.
 
 At production, inspect usage, revoke the leaked credential and provision a replacement. Move left to SOURCE. Replace the source literal, add the early check, then use PATCH! to bind the replacement at runtime. Validate the release. Also test a wrong artifact route, recovery, the budget, retry, guided mode and paused panel reading. The existing Linux handoff records the full scripted scenarios; they still need to pass on Mac. Automated tests do not establish mouse usability or sound quality.
@@ -78,3 +88,23 @@ For failures, preserve `build-mac.log`, `package-mac.log`, and `ShiftLeft/Saved/
 ## Local Codex prompt
 
 > Continue SHIFT LEFT on feat/unreal-mac-build, based on the latest Linux Unreal branch af72e1a. Read AGENTS.md, unreal/MAC_HANDOFF.md and the recorded Linux results. This is an Apple silicon Mac; locate Unreal 5.8, normally /Users/Shared/Epic Games/UE_5.8, and verify compatible full Xcode/Metal tools. Preserve local changes and committed content. Run portable checks, compile the Mac Editor module, verify DeliveryGrid in Play, then cook/package and launch the Mac app. Fix real compiler, Metal, input, camera, character, audio and packaging issues. Preserve the Linux and browser checkpoints. iOS is follow-up work described in IOS_PORT.md. Record exactly what ran and what remains unverified. Commit and push this branch; do not merge.
+
+## Actual Mac verification — November 5, 2026
+
+Machine: Apple M3 Max, 36 GB RAM, arm64, macOS 26.7.1 (25G241). Engine: UE 5.8.4 (58902052), installed under `~/Library/Application Support/Epic/UE_5.8`. Selected developer tools: `/Applications/Xcode.app/Contents/Developer`, Xcode 27.2 (27B52), macOS SDK 27.2, Apple clang 21.0.0. The installed engine's `Apple_SDK.json` accepts Xcode through 27.9.0, and UnrealBuildTool accepted this toolchain without overrides.
+
+- `test-core.sh`: 68 checks passed; `verify-source.py`: passed.
+- Closed the editor before compilation. The unresponsive project-selection window required force termination after Quit and SIGTERM failed; the launcher reopened it once, so the first build attempt was interrupted and editor shutdown reconfirmed before restarting.
+- `build-mac.sh`: succeeded, including reflection generation, all project C++ files and the native editor dylib. No gameplay C++ fixes were required. Committed map, meshes and music were reused without reimport.
+- Mac editor binary with `/Game/Maps/DeliveryGrid -game` and Metal: `complete`, `wrong`, `budget`, `guided`, `pause`, `quit` all reported zero-failure PASS and exited 0. The full incident earned S with effort 3/24 and no routing mistakes. These cover movement, jumping/floor collision, containment, source repair, runtime binding, validation, wrong-route recovery, budget/retry, deadlines, paused reading, music state toggling and quitting.
+- In-engine 1600×900 captures under `ShiftLeft/Saved/Autoplay/` were inspected, including production and the validated release screen. PATCH, DOC, terminal and HUD rendered. This is actual Mac Metal rendering, not a Blender preview or NullRHI run.
+- Editor logs are preserved under `playtest/Mac/editor/`; build output is `build-mac.log`. The new `playtest-mac.sh` keeps packaged logs separately under `playtest/Mac/packaged/`.
+- Found and fixed a real archive defect: the original `package-mac.sh` omitted `-package`. AutomationTool exited successfully but archived the 412 MB bare `Binaries/Mac/ShiftLeft.app` without `Contents/UE` or cooked data. Added Apple package finalization before archive, checks for nonempty `.pak`/`.utoc`/`.ucas` files in the archived app, and strict bundle signature verification. The initial output log is retained locally as `package-mac-before-fix.log`.
+
+- Corrected `package-mac.sh`: exit 0; build, cook, stage, **package**, archive and strict signature verification succeeded. `build/Mac/ShiftLeft.app` is approximately 885 MB, contains cooked game data under `Contents/UE`, and `lipo -archs` reports **arm64 only**. Signature is ad hoc, with no development team; this is a local Development app, not a notarized public release or universal build.
+- Archived executable: `complete`, `wrong`, `budget`, `guided`, `pause`, `quit` each eventually reported zero-failure PASS and exited 0. **The first suite was not clean:** guided and pause exited -11 before emitting logs. Both passed isolated retries without code changes. The macOS diagnostic report `~/Library/Logs/DiagnosticReports/ShiftLeft-2026-11-05-120742.ips` identifies `FLLMTracker::PopTag` / `FMallocBinned3` during AppKit/LaunchServices startup. This intermittent engine-startup reliability issue remains unresolved; successful retries do not establish it is fixed.
+- Packaged captures under `~/Library/Containers/com.YourCompany.ShiftLeft/Data/Library/Application Support/Epic/ShiftLeft/Saved/Autoplay/` show the actual Metal scene and complete release. Logs are under `playtest/Mac/packaged/`; packaging output is `package-mac.log`. Packaged engine initialization reported approximately two seconds.
+- After the user unlocked the Mac, the UI tool attached to the archived game and direct E keyboard input visibly opened the staging terminal, pausing the incident. Mouse attempts failed in the automation service with `noWindowsAvailable` despite successful screenshots; mouse choices therefore remain unverified. Some native UI calls took several minutes despite requested timeouts. Play-in-Editor viewport use has not been tested; editor runtime verification used `-game`.
+- The user explicitly confirmed **music is audible** from the Mac. The runtime music component and M stop/restart checks also passed. CoreAudio nevertheless logged an unknown hardware device and a sample-rate query warning (2003332927); no claim is made that this warning is resolved or that audio quality was independently reviewed.
+
+First editor startup took roughly seven minutes loading libraries and shaders; later launches were substantially faster. No map regeneration, authored-asset edits, engine-installation edits, Linux changes, or browser changes were needed. The checkout was clean before switching branches, and authored Config files were preserved throughout the scripted runs.
